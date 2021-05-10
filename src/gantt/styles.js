@@ -14,8 +14,8 @@ export default function getStyles({
   redLineColor = '#f04134',
   groupBack = '#3db9d3',
   groupFront = '#299cb4',
-  taskBack = '#65c16f',
-  taskFront = '#46ad51',
+  taskBack = '#9EB6FF',
+  taskFront = '#6489FA',
   milestone = '#d33daf',
   warning = '#faad14',
   danger = '#f5222d',
@@ -23,7 +23,6 @@ export default function getStyles({
   textColor = '#222',
   lightTextColor = '#999',
   lineWidth = '1px',
-  thickLineWidth = '1.4px',
   fontSize = SIZE,
   smallFontSize = '12px',
   fontFamily = TYPE,
@@ -39,7 +38,7 @@ export default function getStyles({
   };
   const thickLine = {
     stroke: lineColor,
-    'stroke-width': thickLineWidth
+    'stroke-width': lineWidth
   };
   const text = {
     fill: textColor,
@@ -53,11 +52,13 @@ export default function getStyles({
     'font-size': smallFontSize
   };
   return {
-    week: {
-      fill: 'rgba(252, 248, 227, .6)'
+    weekEven: {
+      fill: 'rgb(247,249,255)'
+    },
+    weekOdd: {
+      fill: 'rgb(255,255,255)'
     },
     box: {
-      ...thickLine,
       fill: bgColor
     },
     line,

@@ -48,7 +48,6 @@ export default function Gantt({
         styles={styles}
         width={width}
         height={height}
-        offsetY={offsetY}
         thickWidth={thickWidth}
         maxTextWidth={maxTextWidth}
       />
@@ -67,11 +66,13 @@ export default function Gantt({
         <WeekHeader
           styles={styles}
           unit={unit}
+          width={width}
           height={height}
           offsetY={offsetY}
           minTime={minTime}
           maxTime={maxTime}
           maxTextWidth={maxTextWidth}
+          thickWidth={thickWidth}
         />
       ) : null}
       {viewMode === 'month' ? (

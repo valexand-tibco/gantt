@@ -3,14 +3,14 @@ import { getDates, addDays, DAY } from '../utils';
 import YearMonth from './YearMonth';
 
 export default function WeekHeader({
-  styles, unit, minTime, maxTime, height, offsetY, maxTextWidth
+  styles, unit, minTime, maxTime, width, height, offsetY, maxTextWidth, thickWidth
 }) {
   const dates = getDates(minTime, maxTime);
   const weeks = dates.filter((v) => (new Date(v)).getDay() === 0);
   weeks.push(maxTime);
   const ticks = [];
   const x0 = maxTextWidth;
-  const y0 = offsetY;
+  const y0 = offsetY / 2;
   const RH = height - y0;
   const d = DAY / unit;
   const len = weeks.length - 1;
@@ -19,10 +19,10 @@ export default function WeekHeader({
     const x = x0 + (weeks[i] - minTime) / unit;
     const curDay = cur.getDate();
     const prevDay = addDays(cur, -1).getDate();
+    const weekStyle = i % 2 === 0 ? styles.weekEven : styles.weekOdd;
     ticks.push((
       <g>
-        <rect x={x - d} y={y0} width={d * 2} height={RH} style={styles.week} />
-        <line x1={x} x2={x} y1={offsetY / 2} y2={offsetY} style={styles.line} />
+        <rect x={x} y={y0} width={d * 7} height={RH} style={weekStyle} />
         <text x={x + 3} y={offsetY * 0.75} style={styles.text2}>{curDay}</text>
         {x - x0 > 28 ? (
           <text x={x - 3} y={offsetY * 0.75} style={styles.text1}>{prevDay}</text>
@@ -30,6 +30,7 @@ export default function WeekHeader({
       </g>
     ));
   }
+  const lineX0 = thickWidth / 2;
   return (
     <g>
       <YearMonth
@@ -42,6 +43,7 @@ export default function WeekHeader({
         maxTextWidth={maxTextWidth}
       />
       {ticks}
+      <line x1={0} x2={width} y1={offsetY - lineX0} y2={offsetY - lineX0} style={styles.bline} />
     </g>
   );
 }
