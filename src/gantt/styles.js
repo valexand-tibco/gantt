@@ -10,10 +10,10 @@ export function getFont({
 
 export default function getStyles({
   bgColor = '#fff',
-  lineColor = '#eee',
-  redLineColor = '#f04134',
-  groupBack = '#3db9d3',
-  groupFront = '#299cb4',
+  lineColor = '#DCDFE8',
+  redLineColor = '#EC9022',
+  groupBack = '#9CFCC8',
+  groupFront = '#6ADB7F',
   taskBack = '#9EB6FF',
   taskFront = '#6489FA',
   milestone = '#d33daf',
@@ -47,6 +47,14 @@ export default function getStyles({
     'font-family': fontFamily,
     'white-space': whiteSpace
   };
+  const textLvl0 = {
+    fill: textColor,
+    'dominant-baseline': 'central',
+    'font-size': '16px',
+    'font-weight': '600',
+    'font-family': fontFamily,
+    'white-space': whiteSpace
+  };
   const smallText = {
     fill: lightTextColor,
     'font-size': smallFontSize
@@ -64,6 +72,7 @@ export default function getStyles({
     line,
     cline: redLine,
     bline: thickLine,
+    labelLvl0: textLvl0,
     label: text,
     groupLabel: {
       ...text,

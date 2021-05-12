@@ -3,7 +3,7 @@ import { getDates, addDays, DAY } from '../utils';
 import YearMonth from './YearMonth';
 
 export default function WeekHeader({
-  styles, unit, minTime, maxTime, width, height, offsetY, maxTextWidth, thickWidth
+  styles, unit, minTime, maxTime, dataHeight, offsetY, maxTextWidth, width
 }) {
   const dates = getDates(minTime, maxTime);
   const weeks = dates.filter((v) => (new Date(v)).getDay() === 0);
@@ -11,7 +11,7 @@ export default function WeekHeader({
   const ticks = [];
   const x0 = maxTextWidth;
   const y0 = offsetY / 2;
-  const RH = height - y0;
+  const RH = dataHeight + y0;
   const d = DAY / unit;
   const len = weeks.length - 1;
   for (let i = 0; i < len; i++) {
@@ -30,9 +30,9 @@ export default function WeekHeader({
       </g>
     ));
   }
-  const lineX0 = thickWidth / 2;
   return (
     <g>
+      {ticks}
       <YearMonth
         styles={styles}
         unit={unit}
@@ -41,9 +41,9 @@ export default function WeekHeader({
         minTime={minTime}
         maxTime={maxTime}
         maxTextWidth={maxTextWidth}
+        dataHeight={dataHeight}
+        width={width}
       />
-      {ticks}
-      <line x1={0} x2={width} y1={offsetY - lineX0} y2={offsetY - lineX0} style={styles.bline} />
     </g>
   );
 }

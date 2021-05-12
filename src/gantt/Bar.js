@@ -2,16 +2,13 @@ import h from '../h';
 import { formatDay } from '../utils';
 
 export default function Bar({
-  styles, data, unit, height, offsetY, minTime, showDelay, rowHeight, barHeight, maxTextWidth, current, onClick
+  styles, data, unit, height, minTime, showDelay, rowHeight, barHeight, maxTextWidth, current, onClick, offsetY
 }) {
   const x0 = maxTextWidth;
-  const y0 = (rowHeight - barHeight) / 2 + offsetY;
+  const y0 = (rowHeight - barHeight) / 2;
   const cur = x0 + (current - minTime) / unit;
   return (
     <g>
-      {current > minTime ? (
-        <line x1={cur} x2={cur} y1={offsetY} y2={height} style={styles.cline} />
-      ) : null}
       {data.map((v, i) => {
         if (!v.end || !v.start) {
           return null;
@@ -46,10 +43,10 @@ export default function Bar({
         };
         if (showDelay) {
           if ((x + w2) < cur && v.percent < 0.999999) {
-            //bar.front = styles.warning;
+            // bar.front = styles.warning;
           }
           if ((x + w1) < cur && v.percent < 0.999999) {
-            //bar.front = styles.danger;
+            // bar.front = styles.danger;
           }
         }
         return (
@@ -67,6 +64,9 @@ export default function Bar({
           </g>
         );
       })}
+      {current > minTime ? (
+        <line x1={cur} x2={cur} y1={-offsetY / 2} y2={height + offsetY} style={styles.cline} />
+      ) : null}
     </g>
   );
 }

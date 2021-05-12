@@ -2,10 +2,10 @@ import h from '../h';
 import { p2s } from '../utils';
 
 export default function LinkLine({
-  styles, data, unit, offsetY, minTime, rowHeight, barHeight, maxTextWidth
+  styles, data, unit, minTime, rowHeight, barHeight, maxTextWidth
 }) {
   const x0 = maxTextWidth;
-  const y0 = (rowHeight / 2) + offsetY;
+  const y0 = (rowHeight / 2);
   const map = {};
   data.forEach((v, i) => {
     map[v.id] = i;
