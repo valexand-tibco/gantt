@@ -126,6 +126,15 @@ export default function getStyles({
       fill: '#f0f0f0',
       stroke: '#929292',
       'stroke-width': '1px'
+    },
+    thumb: {
+      cursor: 'pointer',
+      fill: 'blue'
+    },
+    sliderLine: {
+      strokeWidth: '5px',
+      stroke: '#DCDFE8',
+      strokeOpacity: '0'
     }
   };
 }

@@ -138,6 +138,37 @@ export default class SVGGantt {
       });
     scrollBar.call(dragBehaviour);
   }
+  // eslint-disable-next-line class-methods-use-this
+  addThumbDragBehaviour(sliderWidth) {
+    const thumbElement = d3.select('#thumb');
+    let isDragStarted = false;
+    let offset;
+    const dragBehaviour = d3.drag()
+      .on('drag', (event) => {
+        if (isDragStarted) {
+          offset = event.dx;
+          const newPossition = parseFloat(thumbElement.attr('x')) + offset;
+          if (newPossition >= 0 && newPossition <= sliderWidth) {
+            thumbElement.attr('x', newPossition);
+          }
+        }
+      })
+      .on('start', () => {
+        isDragStarted = true;
+      })
+      .on('end', () => {
+        isDragStarted = false;
+        const currentPossition = parseFloat(thumbElement.attr('x'));
+        if (currentPossition >= 0 && currentPossition < (sliderWidth / 4)) {
+          thumbElement.attr('x', 0);
+        } else if (currentPossition >= (sliderWidth / 4) && currentPossition <= ((sliderWidth * 3) / 4)) {
+          thumbElement.attr('x', sliderWidth / 2);
+        } else if (currentPossition > ((sliderWidth * 3) / 4) && currentPossition <= sliderWidth) {
+          thumbElement.attr('x', sliderWidth);
+        }
+      });
+    thumbElement.call(dragBehaviour);
+  }
   render() {
     const {
       data, start, end, options
@@ -154,5 +185,6 @@ export default class SVGGantt {
     this.tree = render(<Gantt data={data} {...props} />);
     this.dom.appendChild(this.tree);
     this.addScrollBar(options.scrollBarWidth);
+    this.addThumbDragBehaviour(options.sliderWidth);
   }
 }

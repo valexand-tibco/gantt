@@ -3,16 +3,16 @@ import { DAY } from '../utils';
 import DayHeader from './DayHeader';
 import WeekHeader from './WeekHeader';
 import MonthHeader from './MonthHeader';
-import Grid from './Grid';
 import Labels from './Labels';
 import LinkLine from './LinkLine';
 import Bar from './Bar';
 import getStyles from './styles';
+import ViewModeSlider from './ViewModeSlider';
 
 const UNIT = {
   day: DAY / 28,
-  week: 7 * DAY / 56,
-  month: 30 * DAY / 56
+  week: (7 * DAY) / 56,
+  month: (30 * DAY) / 56
 };
 function NOOP() {}
 
@@ -21,12 +21,12 @@ export default function Gantt({
   onClick = NOOP,
   viewMode = 'week',
   maxTextWidth = 140,
+  sliderWidth = 200,
   offsetY = 60,
   rowHeight = 40,
   barHeight = 16,
   maxHeight = 800,
   scrollBarWidth = 8,
-  thickWidth = 1.4,
   styleOptions = {},
   showLinks = true,
   showDelay = true,
@@ -129,6 +129,7 @@ export default function Gantt({
           offsetY={offsetY}
         />
       </g>
+      <ViewModeSlider sliderWidth={sliderWidth} styles={styles} height={height} />
     </svg>
   );
 }
