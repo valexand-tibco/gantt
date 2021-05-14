@@ -19,6 +19,8 @@ function NOOP() {}
 export default function Gantt({
   data = [],
   onClick = NOOP,
+  onMouseOver = NOOP,
+  onMouseOut = NOOP,
   viewMode = 'week',
   maxTextWidth = 140,
   sliderWidth = 200,
@@ -122,6 +124,8 @@ export default function Gantt({
           current={current}
           minTime={minTime}
           onClick={onClick}
+          onMouseOver={onMouseOver}
+          onMouseOut={onMouseOut}
           showDelay={showDelay}
           rowHeight={rowHeight}
           barHeight={barHeight}

@@ -13,6 +13,14 @@ function applyProperties(node, props) {
       if (typeof v === 'function') {
         node.addEventListener('click', v);
       }
+    } else if (k === 'onMouseOver') {
+      if (typeof v === 'function') {
+        node.addEventListener('mouseover', v);
+      }
+    } else if (k === 'onMouseOut') {
+      if (typeof v === 'function') {
+        node.addEventListener('mouseout', v);
+      }
     } else {
       node.setAttribute(k, v);
     }

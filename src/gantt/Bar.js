@@ -2,7 +2,7 @@ import h from '../h';
 import { formatDay } from '../utils';
 
 export default function Bar({
-  styles, data, unit, height, minTime, showDelay, rowHeight, barHeight, maxTextWidth, current, onClick, offsetY
+  styles, data, unit, height, minTime, showDelay, rowHeight, barHeight, maxTextWidth, current, onClick, offsetY, onMouseOver, onMouseOut
 }) {
   const x0 = maxTextWidth;
   const y0 = (rowHeight - barHeight) / 2;
@@ -14,6 +14,8 @@ export default function Bar({
           return null;
         }
         const handler = () => onClick(v);
+        const mouseOverHandler = () => onMouseOver(v);
+        const mouseOutHandler = () => onMouseOut(v);
         const x = x0 + (v.start - minTime) / unit;
         const y = y0 + i * rowHeight;
         const cy = y + barHeight / 2;
@@ -26,8 +28,8 @@ export default function Bar({
             [x - size, cy]
           ].map((p) => `${p[0]},${p[1]}`).join(' ');
           return (
-            <g key={i} class="gantt-bar" style={{ cursor: 'pointer' }} onClick={handler}>
-              <polygon points={points} style={styles.milestone} onClick={handler} />
+            <g key={i} class="gantt-bar" style={{ cursor: 'pointer' }} onClick={handler} onMouseOver={mouseOverHandler} onMouseOut={mouseOutHandler}>
+              <polygon points={points} style={styles.milestone} onClick={handler} onMouseOver={mouseOverHandler} onMouseOut={mouseOutHandler} />
               <circle class="gantt-ctrl-start" data-id={v.id} cx={x} cy={cy} r={6} style={styles.ctrl} />
             </g>
           );
@@ -50,10 +52,21 @@ export default function Bar({
           }
         }
         return (
-          <g key={i} class="gantt-bar" style={{ cursor: 'pointer' }} onClick={handler}>
+          <g key={i} class="gantt-bar" style={{ cursor: 'pointer' }} onClick={handler} onMouseOver={mouseOverHandler} onMouseOut={mouseOutHandler}>
             <text x={x - 4} y={cy} style={styles.text1}>{formatDay(v.start)}</text>
             <text x={x + w1 + 4} y={cy} style={styles.text2}>{formatDay(v.end)}</text>
-            <rect x={x} y={y} width={w1} height={barHeight} rx={1.8} ry={1.8} style={bar.back} onClick={handler} />
+            <rect
+              x={x}
+              y={y}
+              width={w1}
+              height={barHeight}
+              rx={1.8}
+              ry={1.8}
+              style={bar.back}
+              onClick={handler}
+              onMouseOver={mouseOverHandler}
+              onMouseOut={mouseOutHandler}
+            />
             {w2 > 0.000001 ? <rect x={x} y={y} width={w2} height={barHeight} rx={1.8} ry={1.8} style={bar.front} /> : null}
             {v.type === 'group' ? null : (
               <g>
