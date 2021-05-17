@@ -164,12 +164,18 @@ export default class SVGGantt {
         const currentPossition = parseFloat(thumbElement.attr('x'));
         if (currentPossition + thumbWidth / 2 >= sliderLineX && currentPossition + thumbWidth / 2 < sliderLineX + (sliderWidth / 4)) {
           thumbElement.attr('x', sliderLineX - thumbWidth / 2);
+          const viewMode = 'month';
+          this.setOptions({ viewMode });
         } else if (currentPossition + thumbWidth / 2 >= (sliderLineX + sliderWidth / 4)
         && currentPossition + thumbWidth / 2 <= sliderLineX + ((sliderWidth * 3) / 4)) {
           thumbElement.attr('x', sliderLineX + sliderWidth / 2 - thumbWidth / 2);
+          const viewMode = 'week';
+          this.setOptions({ viewMode });
         } else if (currentPossition + thumbWidth / 2 > (sliderLineX + (sliderWidth * 3) / 4)
         && currentPossition + thumbWidth / 2 <= sliderLineX + sliderWidth) {
           thumbElement.attr('x', sliderLineX + sliderWidth - thumbWidth / 2);
+          const viewMode = 'day';
+          this.setOptions({ viewMode });
         }
       });
     thumbElement.call(dragBehaviour);

@@ -3,7 +3,7 @@ import { getDates } from '../utils';
 import YearMonth from './YearMonth';
 
 export default function DayHeader({
-  styles, unit, minTime, maxTime, height, offsetY, maxTextWidth
+  styles, unit, minTime, maxTime, height, offsetY, maxTextWidth, width, viewModeSliderHeight
 }) {
   const dates = getDates(minTime, maxTime);
   const ticks = [];
@@ -31,6 +31,7 @@ export default function DayHeader({
   }
   return (
     <g>
+      {ticks}
       <YearMonth
         styles={styles}
         unit={unit}
@@ -39,8 +40,10 @@ export default function DayHeader({
         minTime={minTime}
         maxTime={maxTime}
         maxTextWidth={maxTextWidth}
+        height={height}
+        width={width}
+        viewModeSliderHeight={viewModeSliderHeight}
       />
-      {ticks}
     </g>
   );
 }

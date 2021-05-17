@@ -22,6 +22,16 @@
           }
         ]
       ]
+    },
+    "lib": {
+      "presets": [
+        [
+          "@babel/preset-env",
+          {
+            "modules": "auto"
+          }
+        ]
+      ]
     }
   }
 }

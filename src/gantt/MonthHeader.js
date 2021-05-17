@@ -3,7 +3,7 @@ import { getDates } from '../utils';
 import Year from './Year';
 
 export default function MonthHeader({
-  styles, unit, minTime, maxTime, offsetY, maxTextWidth
+  styles, unit, minTime, maxTime, offsetY, maxTextWidth, width, height, viewModeSliderHeight
 }) {
   const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const dates = getDates(minTime, maxTime);
@@ -14,24 +14,25 @@ export default function MonthHeader({
 
   const ticks = [];
   const x0 = maxTextWidth;
-  const y0 = offsetY / 2;
+  const y0 = viewModeSliderHeight + offsetY / 2;
   const len = months.length - 1;
   for (let i = 0; i < len; i++) {
     const cur = new Date(months[i]);
     const month = cur.getMonth();
     const x = x0 + (months[i] - minTime) / unit;
-    const t = (months[i + 1] - months[i]) / unit;
+    const t = (months[i + 1] - months[i]) / unit + test;
     ticks.push((
       <g>
         <line x1={x} x2={x} y1={y0} y2={offsetY} style={styles.line} />
         {t > 30 ? (
-          <text x={x + t / 2} y={offsetY * 0.75} style={styles.text3}>{MONTH[month]}</text>
+          <text x={x + t / 2} y={viewModeSliderHeight + offsetY * 0.75} style={styles.text3}>{MONTH[month]}</text>
         ) : null}
       </g>
     ));
   }
   return (
     <g>
+      {ticks}
       <Year
         styles={styles}
         unit={unit}
@@ -40,8 +41,10 @@ export default function MonthHeader({
         minTime={minTime}
         maxTime={maxTime}
         maxTextWidth={maxTextWidth}
+        height={height}
+        width={width}
+        viewModeSliderHeight={viewModeSliderHeight}
       />
-      {ticks}
     </g>
   );
 }
