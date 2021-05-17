@@ -6,6 +6,7 @@ import MonthHeader from './MonthHeader';
 import Labels from './Labels';
 import LinkLine from './LinkLine';
 import Bar from './Bar';
+import CurrentLine from './CurrentLine';
 import getStyles from './styles';
 import ViewModeSlider from './ViewModeSlider';
 
@@ -36,8 +37,10 @@ export default function Gantt({
   end
 }) {
   const unit = UNIT[viewMode];
-  const minTime = start.getTime() - unit * 48;
-  const maxTime = end.getTime() + unit * 48;
+  const minTime = start.getTime() - unit * 32;
+  const maxTime = end.getTime() + unit * 32;
+
+  const viewModeSliderHeight = 40;
 
   const width = (maxTime - minTime) / unit + maxTextWidth;
   let svgWidth = width;
@@ -50,11 +53,10 @@ export default function Gantt({
   const current = Date.now();
   const styles = getStyles(styleOptions);
 
-  const dataHeight = rowHeight * data.length;
-
   return (
     // eslint-disable-next-line no-unused-vars
     <svg width={svgWidth} height={height} viewBox={box}>
+      <ViewModeSlider sliderWidth={sliderWidth} styles={styles} width={width} maxTextWidth={maxTextWidth} />
       {viewMode === 'day' ? (
         <DayHeader
           styles={styles}
@@ -70,12 +72,13 @@ export default function Gantt({
         <WeekHeader
           styles={styles}
           unit={unit}
-          dataHeight={dataHeight}
           offsetY={offsetY}
           minTime={minTime}
           maxTime={maxTime}
           maxTextWidth={maxTextWidth}
           width={width}
+          height={height}
+          viewModeSliderHeight={viewModeSliderHeight}
         />
       ) : null}
       {viewMode === 'month' ? (
@@ -88,13 +91,7 @@ export default function Gantt({
           maxTextWidth={maxTextWidth}
         />
       ) : null}
-      <g id="scrollgroup" width={width} height={height} x="0" y={offsetY}>
-        {/* <Grid
-          styles={styles}
-          data={data}
-          width={width}
-          rowHeight={rowHeight}
-        /> */}
+      <g id="scrollgroup" width={width} height={height - offsetY} x="0" y={offsetY}>
         {maxTextWidth > 0 ? (
           <Labels
             styles={styles}
@@ -102,6 +99,8 @@ export default function Gantt({
             onClick={onClick}
             rowHeight={rowHeight}
             width={width}
+            maxTextWidth={maxTextWidth}
+            viewModeSliderHeight={viewModeSliderHeight}
           />
         ) : null}
         {showLinks ? (
@@ -120,7 +119,6 @@ export default function Gantt({
           styles={styles}
           data={data}
           unit={unit}
-          height={dataHeight}
           current={current}
           minTime={minTime}
           onClick={onClick}
@@ -130,10 +128,19 @@ export default function Gantt({
           rowHeight={rowHeight}
           barHeight={barHeight}
           maxTextWidth={maxTextWidth}
-          offsetY={offsetY}
+          viewModeSliderHeight={viewModeSliderHeight}
         />
       </g>
-      <ViewModeSlider sliderWidth={sliderWidth} styles={styles} height={height} />
+      <CurrentLine
+        styles={styles}
+        unit={unit}
+        height={height}
+        current={current}
+        minTime={minTime}
+        maxTextWidth={maxTextWidth}
+        offsetY={offsetY}
+        viewModeSliderHeight={viewModeSliderHeight}
+      />
     </svg>
   );
 }

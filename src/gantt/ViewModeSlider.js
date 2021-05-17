@@ -1,9 +1,22 @@
 import h from '../h';
+import { getFont } from './styles';
+import {
+  textWidth
+} from '../utils';
 
 export default function ViewModeSlider({
-  sliderWidth, styles, height
+  sliderWidth, styles, width, maxTextWidth
 }) {
-  const labels = ['Month', 'Week', 'Day'];
+  const labels = [{
+    title: 'Month',
+    position: 0
+  }, {
+    title: 'Week',
+    position: 0
+  }, {
+    title: 'Day',
+    position: 0
+  }];
   let offset;
 
   function updateThumbPosition(position) {
@@ -30,33 +43,58 @@ export default function ViewModeSlider({
     }
   }
 
+  const font = getFont(styles || {});
+  const monthWidth = textWidth(labels[0].title, font, 0);
+  const weekWidth = textWidth(labels[1].title, font, 0);
+  const dayWidth = textWidth(labels[2].title, font, 0);
+  const thumbWidth = 10;
+  const thumbHeight = 12;
+
+  const lineX1 = maxTextWidth + (width - maxTextWidth) / 2 - sliderWidth / 2;
+  const lineX2 = maxTextWidth + (width - maxTextWidth) / 2 + sliderWidth / 2;
+
+  labels[0].position = lineX1 - monthWidth / 2;
+  labels[1].position = maxTextWidth + (width - maxTextWidth) / 2 - weekWidth / 2;
+  labels[2].position = lineX2 - dayWidth / 2;
+
+  const labelY = 10;
+  const lineY = labelY + 20;
+  const thumbY = lineY - 3;
+
   return (
     <g>
       {labels.map((v, i) => (
         <text
           key={i}
-          y={height - 40}
-          style={styles.text3}
-          x={(sliderWidth * i) / 2}
+          y={labelY}
+          style={styles.label}
+          x={labels[i].position}
         >
-          {v}
+          {v.title}
         </text>
       ))}
-      <line x1={0} x2={sliderWidth} y1={height - 20} y2={height - 20} style={styles.line} />
       <line
-        x1={0}
-        x2={sliderWidth}
-        y1={height - 20}
-        y2={height - 20}
+        x1={lineX1}
+        x2={lineX2}
+        y1={lineY}
+        y2={lineY}
+        style={styles.line}
+      />
+      <line
+        id="sliderLine"
+        x1={lineX1}
+        x2={lineX2}
+        y1={lineY}
+        y2={lineY}
         style={styles.sliderLine}
         onClick={(evt) => lineClick(evt)}
       />
       <svg
         id="thumb"
-        y={height - 24}
-        x={sliderWidth / 2}
-        width={9}
-        height={12}
+        y={thumbY}
+        x={maxTextWidth + (width - maxTextWidth) / 2 - thumbWidth / 2}
+        width={thumbWidth}
+        height={thumbHeight}
         style={styles.thumb}
       >
         <g>

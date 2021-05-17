@@ -35,7 +35,7 @@ export default class SVGGantt {
     this.render();
   }
   // eslint-disable-next-line class-methods-use-this
-  addScrollBar(scrollBarWidth) {
+  addScrollBar(scrollBarWidth, offsetY, rowHeight, barHeight) {
     let scrollDistance = 0;
 
     const root = d3.select('#scrollgroup')
@@ -95,9 +95,9 @@ export default class SVGGantt {
     const absoluteContentHeight = contentBBox.y + contentBBox.height;
 
     const scrollbarHeight = rootBBox.height * rootBBox.height / absoluteContentHeight;
-    scrollBar.attr('height', scrollbarHeight - 60);
+    scrollBar.attr('height', scrollbarHeight);
 
-    const maxScroll = Math.max(absoluteContentHeight - rootBBox.height + 60, 0);
+    const maxScroll = Math.max(absoluteContentHeight - rootBBox.height + (rowHeight - barHeight) / 2, 0);
 
     function updateScrollPosition(diff) {
       scrollDistance += diff;
@@ -141,6 +141,9 @@ export default class SVGGantt {
   // eslint-disable-next-line class-methods-use-this
   addThumbDragBehaviour(sliderWidth) {
     const thumbElement = d3.select('#thumb');
+    const thumbWidth = parseFloat(thumbElement.attr('width'));
+    const sliderLine = d3.select('#sliderLine');
+    const sliderLineX = parseFloat(sliderLine.attr('x1'));
     let isDragStarted = false;
     let offset;
     const dragBehaviour = d3.drag()
@@ -148,7 +151,7 @@ export default class SVGGantt {
         if (isDragStarted) {
           offset = event.dx;
           const newPossition = parseFloat(thumbElement.attr('x')) + offset;
-          if (newPossition >= 0 && newPossition <= sliderWidth) {
+          if (newPossition + thumbWidth / 2 >= sliderLineX && newPossition + thumbWidth / 2 <= sliderLineX + sliderWidth) {
             thumbElement.attr('x', newPossition);
           }
         }
@@ -159,12 +162,14 @@ export default class SVGGantt {
       .on('end', () => {
         isDragStarted = false;
         const currentPossition = parseFloat(thumbElement.attr('x'));
-        if (currentPossition >= 0 && currentPossition < (sliderWidth / 4)) {
-          thumbElement.attr('x', 0);
-        } else if (currentPossition >= (sliderWidth / 4) && currentPossition <= ((sliderWidth * 3) / 4)) {
-          thumbElement.attr('x', sliderWidth / 2);
-        } else if (currentPossition > ((sliderWidth * 3) / 4) && currentPossition <= sliderWidth) {
-          thumbElement.attr('x', sliderWidth);
+        if (currentPossition + thumbWidth / 2 >= sliderLineX && currentPossition + thumbWidth / 2 < sliderLineX + (sliderWidth / 4)) {
+          thumbElement.attr('x', sliderLineX - thumbWidth / 2);
+        } else if (currentPossition + thumbWidth / 2 >= (sliderLineX + sliderWidth / 4)
+        && currentPossition + thumbWidth / 2 <= sliderLineX + ((sliderWidth * 3) / 4)) {
+          thumbElement.attr('x', sliderLineX + sliderWidth / 2 - thumbWidth / 2);
+        } else if (currentPossition + thumbWidth / 2 > (sliderLineX + (sliderWidth * 3) / 4)
+        && currentPossition + thumbWidth / 2 <= sliderLineX + sliderWidth) {
+          thumbElement.attr('x', sliderLineX + sliderWidth - thumbWidth / 2);
         }
       });
     thumbElement.call(dragBehaviour);
@@ -184,7 +189,7 @@ export default class SVGGantt {
     const props = { ...options, start, end };
     this.tree = render(<Gantt data={data} {...props} />);
     this.dom.appendChild(this.tree);
-    this.addScrollBar(options.scrollBarWidth);
+    this.addScrollBar(options.scrollBarWidth, options.offsetY, options.rowHeight, options.barHeight);
     this.addThumbDragBehaviour(options.sliderWidth);
   }
 }

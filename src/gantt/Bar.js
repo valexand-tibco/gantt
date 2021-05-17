@@ -2,7 +2,7 @@ import h from '../h';
 import { formatDay } from '../utils';
 
 export default function Bar({
-  styles, data, unit, height, minTime, showDelay, rowHeight, barHeight, maxTextWidth, current, onClick, offsetY, onMouseOver, onMouseOut
+  styles, data, unit, minTime, showDelay, rowHeight, barHeight, maxTextWidth, current, onClick, onMouseOver, onMouseOut, viewModeSliderHeight
 }) {
   const x0 = maxTextWidth;
   const y0 = (rowHeight - barHeight) / 2;
@@ -17,7 +17,7 @@ export default function Bar({
         const mouseOverHandler = () => onMouseOver(v);
         const mouseOutHandler = () => onMouseOut(v);
         const x = x0 + (v.start - minTime) / unit;
-        const y = y0 + i * rowHeight;
+        const y = viewModeSliderHeight + y0 + i * rowHeight;
         const cy = y + barHeight / 2;
         if (v.type === 'milestone') {
           const size = barHeight / 2;
@@ -34,7 +34,10 @@ export default function Bar({
             </g>
           );
         }
-        const w1 = (v.end - v.start) / unit;
+        let w1 = (v.end - v.start) / unit;
+        if (w1 === 0) {
+          w1 = 4;
+        }
         const w2 = w1 * v.percent;
         const bar = v.type === 'group' ? {
           back: styles.groupBack,
@@ -77,9 +80,6 @@ export default function Bar({
           </g>
         );
       })}
-      {current > minTime ? (
-        <line x1={cur} x2={cur} y1={-offsetY / 2} y2={height + offsetY} style={styles.cline} />
-      ) : null}
     </g>
   );
 }
