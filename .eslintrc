@@ -1,6 +1,8 @@
 parser: babel-eslint
 extends: airbnb
 
+ignorePatterns: [ "dist/**" ] 
+
 env:
   mocha: true
   browser: true

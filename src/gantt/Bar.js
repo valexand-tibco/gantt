@@ -2,7 +2,7 @@ import h from '../h';
 import { formatDay } from '../utils';
 
 export default function Bar({
-  styles, data, unit, minTime, showDelay, rowHeight, barHeight, maxTextWidth, current, onClick, onMouseOver, onMouseOut, viewModeSliderHeight
+  styles, data, unit, minTime, showDelay, rowHeight, barHeight, maxTextWidth, current, onClick, onMouseOver, onMouseOut, offsetY
 }) {
   const x0 = maxTextWidth;
   const y0 = (rowHeight - barHeight) / 2;
@@ -17,7 +17,7 @@ export default function Bar({
         const mouseOverHandler = () => onMouseOver(v);
         const mouseOutHandler = () => onMouseOut(v);
         const x = x0 + (v.start - minTime) / unit;
-        const y = viewModeSliderHeight + y0 + i * rowHeight;
+        const y = offsetY + y0 + i * rowHeight;
         const cy = y + barHeight / 2;
         if (v.type === 'milestone') {
           const size = barHeight / 2;

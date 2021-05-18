@@ -49,9 +49,6 @@ export default class SVGGantt {
       height: parseFloat(root.attr('height'))
     };
 
-    // Move all children of scrollgroup
-    // to a content sub-group
-    // I'm doing this because otherwise clip path gets glitchy
     const contentItems = root.selectAll('*');
     const content = root.append('g')
       .attr('transform', `translate(${rootBBox.x},${rootBBox.y})`);
@@ -60,9 +57,6 @@ export default class SVGGantt {
       content.node().appendChild(contenItemsNodes[i]);
     }
 
-    // Add a clip path and a rect within it
-    // everything inside the scrollgroup group that does not overlap this rectangle
-    // will be hidden
     const clipRect = parent.append('clipPath').attr('id', 'scrollbox-clip-path').append('rect');
     clipRect
       .attr('x', rootBBox.x)
@@ -70,9 +64,6 @@ export default class SVGGantt {
       .attr('width', rootBBox.width)
       .attr('height', rootBBox.height);
 
-    // Insert an invisible rect
-    // that will catch scroll events
-    // as group element itself can't do it.
     root
       .insert('rect', 'g')
       .attr('x', rootBBox.x)
@@ -81,7 +72,6 @@ export default class SVGGantt {
       .attr('height', rootBBox.height)
       .attr('opacity', 0);
 
-    // Position the scroll indicator
     const scrollBar = parent.append('rect')
       .attr('width', scrollBarWidth)
       .attr('rx', scrollBarWidth / 2)
@@ -90,7 +80,6 @@ export default class SVGGantt {
       .attr('fill', 'rgba(0, 0, 0, 0.3)')
       .attr('transform', `translate(${rootBBox.x + rootBBox.width},${rootBBox.y})`);
 
-    // Calculate maximum scrollable amount
     const contentBBox = content.node().getBBox();
     const absoluteContentHeight = contentBBox.y + contentBBox.height;
 
@@ -109,7 +98,6 @@ export default class SVGGantt {
       if (!Number.isNaN(scrollBarPosition)) scrollBar.attr('y', scrollBarPosition);
     }
 
-    // Set up scroll events
     root.on('wheel', () => {
       // eslint-disable-next-line no-restricted-globals
       updateScrollPosition(event.deltaY);
@@ -125,7 +113,6 @@ export default class SVGGantt {
       }
     });
 
-    // Set up scrollbar drag events
     const dragBehaviour = d3.drag()
       .on('drag', (event) => {
         updateScrollPosition(event.dy * maxScroll / (rootBBox.height - scrollbarHeight));
@@ -138,6 +125,7 @@ export default class SVGGantt {
       });
     scrollBar.call(dragBehaviour);
   }
+
   // eslint-disable-next-line class-methods-use-this
   addThumbDragBehaviour(sliderWidth) {
     const thumbElement = d3.select('#thumb');

@@ -1,5 +1,5 @@
 import h from '../h';
-import { getDates } from '../utils';
+import { getDates, DAY } from '../utils';
 import YearMonth from './YearMonth';
 
 export default function DayHeader({
@@ -8,24 +8,27 @@ export default function DayHeader({
   const dates = getDates(minTime, maxTime);
   const ticks = [];
   const x0 = maxTextWidth;
-  const y0 = offsetY / 2;
-  const RH = height - y0;
+  const y0 = viewModeSliderHeight + offsetY / 2;
+  const RH = height - offsetY / 2 - viewModeSliderHeight;
   const len = dates.length - 1;
+  let dayWidth = DAY / unit;
   for (let i = 0; i < len; i++) {
     const cur = new Date(dates[i]);
     const day = cur.getDay();
     const x = x0 + (dates[i] - minTime) / unit;
     const t = (dates[i + 1] - dates[i]) / unit;
+    if (x + dayWidth > width) {
+      dayWidth = width - x;
+    }
     ticks.push((
       <g>
         {day === 0 || day === 6 ? (
-          <rect x={x} y={y0} width={t} height={RH} style={styles.week} />
+          <rect x={x} y={y0} width={dayWidth} height={RH} style={styles.weekEven} />
         ) : null}
-        <line x1={x} x2={x} y1={y0} y2={offsetY} style={styles.line} />
-        <text x={x + t / 2} y={offsetY * 0.75} style={styles.text3}>{cur.getDate()}</text>
-        {i === len - 1 ? (
-          <line x1={x + t} x2={x + t} y1={y0} y2={offsetY} style={styles.line} />
+        {i !== 0 ? (
+          <line x1={x} x2={x} y1={y0} y2={height} style={styles.line} />
         ) : null}
+        <text x={x + dayWidth / 2} y={viewModeSliderHeight + offsetY * 0.75} style={styles.text3}>{cur.getDate()}</text>
       </g>
     ));
   }

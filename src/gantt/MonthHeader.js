@@ -20,10 +20,10 @@ export default function MonthHeader({
     const cur = new Date(months[i]);
     const month = cur.getMonth();
     const x = x0 + (months[i] - minTime) / unit;
-    const t = (months[i + 1] - months[i]) / unit + test;
+    const t = (months[i + 1] - months[i]) / unit;
     ticks.push((
       <g>
-        <line x1={x} x2={x} y1={y0} y2={offsetY} style={styles.line} />
+        <line x1={x} x2={x} y1={y0} y2={height} style={styles.line} />
         {t > 30 ? (
           <text x={x + t / 2} y={viewModeSliderHeight + offsetY * 0.75} style={styles.text3}>{MONTH[month]}</text>
         ) : null}

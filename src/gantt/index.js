@@ -56,7 +56,7 @@ export default function Gantt({
   return (
     // eslint-disable-next-line no-unused-vars
     <svg width={svgWidth} height={height} viewBox={box}>
-      <ViewModeSlider sliderWidth={sliderWidth} styles={styles} width={width} maxTextWidth={maxTextWidth} />
+      <ViewModeSlider sliderWidth={sliderWidth} styles={styles} width={width} maxTextWidth={maxTextWidth} viewMode={viewMode} />
       {viewMode === 'day' ? (
         <DayHeader
           styles={styles}
@@ -66,6 +66,8 @@ export default function Gantt({
           minTime={minTime}
           maxTime={maxTime}
           maxTextWidth={maxTextWidth}
+          width={width}
+          viewModeSliderHeight={viewModeSliderHeight}
         />
       ) : null}
       {viewMode === 'week' ? (
@@ -89,9 +91,12 @@ export default function Gantt({
           minTime={minTime}
           maxTime={maxTime}
           maxTextWidth={maxTextWidth}
+          width={width}
+          height={height}
+          viewModeSliderHeight={viewModeSliderHeight}
         />
       ) : null}
-      <g id="scrollgroup" width={width} height={height - offsetY} x="0" y={offsetY}>
+      <g id="scrollgroup" width={width} height={height - offsetY - viewModeSliderHeight} x="0" y={offsetY + viewModeSliderHeight}>
         {maxTextWidth > 0 ? (
           <Labels
             styles={styles}
@@ -100,7 +105,7 @@ export default function Gantt({
             rowHeight={rowHeight}
             width={width}
             maxTextWidth={maxTextWidth}
-            viewModeSliderHeight={viewModeSliderHeight}
+            offsetY={0}
           />
         ) : null}
         {showLinks ? (
@@ -128,7 +133,7 @@ export default function Gantt({
           rowHeight={rowHeight}
           barHeight={barHeight}
           maxTextWidth={maxTextWidth}
-          viewModeSliderHeight={viewModeSliderHeight}
+          offsetY={0}
         />
       </g>
       <CurrentLine

@@ -5,17 +5,20 @@ import {
 } from '../utils';
 
 export default function ViewModeSlider({
-  sliderWidth, styles, width, maxTextWidth
+  sliderWidth, styles, width, maxTextWidth, viewMode
 }) {
   const labels = [{
     title: 'Month',
-    position: 0
+    position: 0,
+    thumbPosition: 0
   }, {
     title: 'Week',
-    position: 0
+    position: 0,
+    thumbPosition: 0
   }, {
     title: 'Day',
-    position: 0
+    position: 0,
+    thumbPosition: 0
   }];
   let offset;
 
@@ -57,6 +60,18 @@ export default function ViewModeSlider({
   labels[1].position = maxTextWidth + (width - maxTextWidth) / 2 - weekWidth / 2;
   labels[2].position = lineX2 - dayWidth / 2;
 
+  labels[0].thumbPosition = lineX1 - thumbWidth / 2;
+  labels[1].thumbPosition = maxTextWidth + (width - maxTextWidth) / 2 - thumbWidth / 2;
+  labels[2].thumbPosition = lineX2 - thumbWidth / 2;
+
+  let thumbX = labels[0].thumbPosition;
+
+  if (viewMode === 'week') {
+    thumbX = labels[1].thumbPosition;
+  } else if (viewMode === 'day') {
+    thumbX = labels[2].thumbPosition;
+  }
+
   const labelY = 10;
   const lineY = labelY + 20;
   const thumbY = lineY - 3;
@@ -92,7 +107,7 @@ export default function ViewModeSlider({
       <svg
         id="thumb"
         y={thumbY}
-        x={maxTextWidth + (width - maxTextWidth) / 2 - thumbWidth / 2}
+        x={thumbX}
         width={thumbWidth}
         height={thumbHeight}
         style={styles.thumb}
