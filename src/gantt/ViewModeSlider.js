@@ -35,14 +35,17 @@ export default function ViewModeSlider({
     };
   }
 
+  const lineX1 = maxTextWidth + (width - maxTextWidth) / 2 - sliderWidth / 2;
+  const lineX2 = maxTextWidth + (width - maxTextWidth) / 2 + sliderWidth / 2;
+
   function lineClick(evt) {
     offset = getMousePosition(evt);
-    if (offset.x >= 0 && offset.x < (sliderWidth / 4)) {
-      updateThumbPosition(0);
-    } else if (offset.x >= (sliderWidth / 4) && offset.x <= ((sliderWidth * 3) / 4)) {
-      updateThumbPosition(sliderWidth / 2);
-    } else if (offset.x > ((sliderWidth * 3) / 4) && offset.x <= sliderWidth) {
-      updateThumbPosition(sliderWidth);
+    if (offset.x >= lineX1 && offset.x < ((sliderWidth / 4) + lineX1)) {
+      updateThumbPosition(lineX1);
+    } else if (offset.x >= ((sliderWidth / 4) + lineX1) && offset.x <= (((sliderWidth * 3) / 4) + lineX1)) {
+      updateThumbPosition((sliderWidth / 2) + lineX1);
+    } else if (offset.x > (((sliderWidth * 3) / 4) + lineX1) && offset.x <= lineX2) {
+      updateThumbPosition(lineX2);
     }
   }
 
@@ -52,9 +55,6 @@ export default function ViewModeSlider({
   const dayWidth = textWidth(labels[2].title, font, 0);
   const thumbWidth = 10;
   const thumbHeight = 12;
-
-  const lineX1 = maxTextWidth + (width - maxTextWidth) / 2 - sliderWidth / 2;
-  const lineX2 = maxTextWidth + (width - maxTextWidth) / 2 + sliderWidth / 2;
 
   labels[0].position = lineX1 - monthWidth / 2;
   labels[1].position = maxTextWidth + (width - maxTextWidth) / 2 - weekWidth / 2;
@@ -101,7 +101,7 @@ export default function ViewModeSlider({
         x2={lineX2}
         y1={lineY}
         y2={lineY}
-        style={styles.sliderLine}
+        style={styles.thickLine}
         onClick={(evt) => lineClick(evt)}
       />
       <svg

@@ -22,6 +22,8 @@ export default function Gantt({
   onClick = NOOP,
   onMouseOver = NOOP,
   onMouseOut = NOOP,
+  onMouseOverLine = NOOP,
+  onMouseOutLine = NOOP,
   viewMode = 'week',
   maxTextWidth = 140,
   sliderWidth = 200,
@@ -145,6 +147,8 @@ export default function Gantt({
         maxTextWidth={maxTextWidth}
         offsetY={offsetY}
         viewModeSliderHeight={viewModeSliderHeight}
+        onMouseOver={onMouseOverLine}
+        onMouseOut={onMouseOutLine}
       />
     </svg>
   );

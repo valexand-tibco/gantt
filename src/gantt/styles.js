@@ -131,7 +131,7 @@ export default function getStyles({
       cursor: 'pointer',
       fill: 'blue'
     },
-    sliderLine: {
+    thickLine: {
       strokeWidth: '5px',
       stroke: '#DCDFE8',
       strokeOpacity: '0'
