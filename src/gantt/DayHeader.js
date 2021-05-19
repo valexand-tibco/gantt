@@ -16,7 +16,6 @@ export default function DayHeader({
     const cur = new Date(dates[i]);
     const day = cur.getDay();
     const x = x0 + (dates[i] - minTime) / unit;
-    const t = (dates[i + 1] - dates[i]) / unit;
     if (x + dayWidth > width) {
       dayWidth = width - x;
     }

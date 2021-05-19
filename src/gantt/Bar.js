@@ -1,8 +1,10 @@
+import * as d3 from 'd3';
 import h from '../h';
 import { formatDay } from '../utils';
 
 export default function Bar({
-  styles, data, unit, minTime, showDelay, rowHeight, barHeight, maxTextWidth, current, onClick, onMouseOver, onMouseOut, offsetY
+  styles, data, unit, minTime, showDelay, rowHeight, barHeight, maxTextWidth, current, onClick,
+  onMouseOver, onMouseOut, offsetY
 }) {
   const x0 = maxTextWidth;
   const y0 = (rowHeight - barHeight) / 2;
@@ -14,8 +16,6 @@ export default function Bar({
           return null;
         }
         const handler = () => onClick(v);
-        const mouseOverHandler = () => onMouseOver(v);
-        const mouseOutHandler = () => onMouseOut(v);
         const x = x0 + (v.start - minTime) / unit;
         const y = offsetY + y0 + i * rowHeight;
         const cy = y + barHeight / 2;
@@ -28,8 +28,8 @@ export default function Bar({
             [x - size, cy]
           ].map((p) => `${p[0]},${p[1]}`).join(' ');
           return (
-            <g key={i} class="gantt-bar" style={{ cursor: 'pointer' }} onClick={handler} onMouseOver={mouseOverHandler} onMouseOut={mouseOutHandler}>
-              <polygon points={points} style={styles.milestone} onClick={handler} onMouseOver={mouseOverHandler} onMouseOut={mouseOutHandler} />
+            <g key={i} class="gantt-bar" style={{ cursor: 'pointer' }} onClick={handler}>
+              <polygon points={points} style={styles.milestone} onClick={handler} />
               <circle class="gantt-ctrl-start" data-id={v.id} cx={x} cy={cy} r={6} style={styles.ctrl} />
             </g>
           );
@@ -54,6 +54,32 @@ export default function Bar({
             // bar.front = styles.danger;
           }
         }
+        const mouseOverHandler = () => {
+          const currentBar = d3.select(`#bar${i}`);
+          currentBar
+            .style('stroke-width', '1px');
+          onMouseOver(v);
+        };
+        const mouseOutHandler = () => {
+          const currentBar = d3.select(`#bar${i}`);
+          currentBar
+            .style('stroke-width', '0px');
+          onMouseOut(v);
+        };
+        const barRect = (
+          <rect
+            x={x - 2}
+            y={y - 2}
+            width={w1 + 4}
+            height={barHeight + 4}
+            rx={1.8}
+            ry={1.8}
+            style={styles.taskHover}
+            id={`bar${i}`}
+            onMouseOver={mouseOverHandler}
+            onMouseOut={mouseOutHandler}
+          />
+        );
         return (
           <g key={i} class="gantt-bar" style={{ cursor: 'pointer' }} onClick={handler} onMouseOver={mouseOverHandler} onMouseOut={mouseOutHandler}>
             <text x={x - 4} y={cy} style={styles.text1}>{formatDay(v.start)}</text>
@@ -67,10 +93,10 @@ export default function Bar({
               ry={1.8}
               style={bar.back}
               onClick={handler}
-              onMouseOver={mouseOverHandler}
-              onMouseOut={mouseOutHandler}
             />
+
             {w2 > 0.000001 ? <rect x={x} y={y} width={w2} height={barHeight} rx={1.8} ry={1.8} style={bar.front} /> : null}
+            {barRect}
             {v.type === 'group' ? null : (
               <g>
                 <circle class="gantt-ctrl-start" data-id={v.id} cx={x - 12} cy={cy} r={6} style={styles.ctrl} />

@@ -115,6 +115,12 @@ export default function getStyles({
     taskFront: {
       fill: taskFront
     },
+    taskHover: {
+      fill: bgColor,
+      fillOpacity: '0',
+      stroke: '#333',
+      strokeWidth: '0px'
+    },
     warning: {
       fill: warning
     },
