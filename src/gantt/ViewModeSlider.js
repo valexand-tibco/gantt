@@ -101,7 +101,7 @@ export default function ViewModeSlider({
         x2={lineX2}
         y1={lineY}
         y2={lineY}
-        style={styles.thickLine}
+        style={styles.thickLineSlider}
         onClick={(evt) => lineClick(evt)}
       />
       <svg

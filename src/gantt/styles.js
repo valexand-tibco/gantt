@@ -141,6 +141,12 @@ export default function getStyles({
       strokeWidth: '5px',
       stroke: '#DCDFE8',
       strokeOpacity: '0'
+    },
+    thickLineSlider: {
+      strokeWidth: '5px',
+      stroke: '#DCDFE8',
+      strokeOpacity: '0',
+      cursor: 'pointer'
     }
   };
 }
