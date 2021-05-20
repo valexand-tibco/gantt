@@ -68,12 +68,10 @@ export default function Bar({
         };
         const barRect = (
           <rect
-            x={x - 2}
-            y={y - 2}
-            width={w1 + 4}
-            height={barHeight + 4}
-            rx={1.8}
-            ry={1.8}
+            x={x - 3}
+            y={y - 3}
+            width={w1 + 6}
+            height={barHeight + 6}
             style={styles.taskHover}
             id={`bar${i}`}
             onMouseOver={mouseOverHandler}
@@ -89,13 +87,11 @@ export default function Bar({
               y={y}
               width={w1}
               height={barHeight}
-              rx={1.8}
-              ry={1.8}
               style={bar.back}
               onClick={handler}
             />
 
-            {w2 > 0.000001 ? <rect x={x} y={y} width={w2} height={barHeight} rx={1.8} ry={1.8} style={bar.front} /> : null}
+            {w2 > 0.000001 ? <rect x={x} y={y} width={w2} height={barHeight} style={bar.front} /> : null}
             {barRect}
             {v.type === 'group' ? null : (
               <g>
