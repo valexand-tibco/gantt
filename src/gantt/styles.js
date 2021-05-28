@@ -154,6 +154,9 @@ export default function getStyles({
       fillOpacity: '0.3',
       strokeOpacity: '0.7',
       strokeWidth: '2'
+    },
+    zoomSlider: {
+      cursor: 'pointer'
     }
   };
 }

@@ -1,17 +1,43 @@
 import * as d3 from 'd3';
 import h from '../h';
-import { formatDay } from '../utils';
+import { formatDay, getDates } from '../utils';
 
 export default function Bar({
-  styles, data, unit, minTime, showDelay, rowHeight, barHeight, maxTextWidth, current, onClick,
+  styles, data, unit, minTime, showDelay, rowHeight, barHeight, maxTextWidth, current, onClick, maxTime,
   onMouseOver, onMouseOut, offsetY
 }) {
+  const lines = [];
+  const dates = getDates(minTime, maxTime);
+  const len = dates.length - 1;
   const x0 = maxTextWidth;
   const y0 = (rowHeight - barHeight) / 2;
   const cur = x0 + (current - minTime) / unit;
   const markExists = data.find((r) => r.marked[0]);
+  const dayWidth = 30;
+  const RH = offsetY / 2;
+  let lineX = x0;
+  for (let i = 0; i < len; i++) {
+    const currentDay = new Date(dates[i]);
+    const day = currentDay.getDay();
+    if (i === 0) {
+      lineX = x0;
+    } else {
+      lineX += dayWidth;
+    }
+    lines.push((
+      <g>
+        {day === 0 || day === 6 ? (
+          <rect x={lineX} y={y0} width={dayWidth} height={RH} style={styles.weekEven} />
+        ) : null}
+        {i !== 0 && i !== len - 1 ? (
+          <line x1={lineX} x2={lineX} y1={offsetY} y2={data.length * rowHeight + offsetY} style={styles.line} />
+        ) : null}
+      </g>
+    ));
+  }
   return (
     <g>
+      {lines}
       {data.map((v, i) => {
         if (!v.end || !v.start) {
           return null;

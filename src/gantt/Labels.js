@@ -1,22 +1,24 @@
 import h from '../h';
 
 export default function Labels({
-  styles, data, onClick, rowHeight, width, maxTextWidth, offsetY
+  styles, data, onClick, rowHeight, maxTextWidth, offsetY, headerHeight
 }) {
   return (
-    <g>
+    <g id="Labels">
+      <rect x={0} y={offsetY} width={maxTextWidth} height={data.length * rowHeight + headerHeight} fill="white" />
       {data.map((v, i) => (
         <g>
-          {v.level === 0 ? (
+          {/* {v.level === 0 ? (
             <line
               key={i}
               x1={0}
-              x2={i === 0 ? maxTextWidth : width}
+              //x2={i === 0 ? maxTextWidth : width}
+              x2={maxTextWidth}
               y1={offsetY + i * rowHeight}
               y2={offsetY + i * rowHeight}
               style={styles.line}
             />
-          ) : null}
+          ) : null} */}
           <text
             key={i}
             x={10}

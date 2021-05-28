@@ -274,3 +274,10 @@ export function autoSchedule(tasks, links, lockMilestone = false) {
     }
   });
 }
+
+export function getTranslation(transform) {
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.setAttributeNS(null, 'transform', transform);
+  const { matrix } = g.transform.baseVal.consolidate();
+  return [matrix.e, matrix.f];
+}
