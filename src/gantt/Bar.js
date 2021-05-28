@@ -9,13 +9,14 @@ export default function Bar({
   const x0 = maxTextWidth;
   const y0 = (rowHeight - barHeight) / 2;
   const cur = x0 + (current - minTime) / unit;
+  const markExists = data.find((r) => r.marked[0]);
   return (
     <g>
       {data.map((v, i) => {
         if (!v.end || !v.start) {
           return null;
         }
-        const handler = () => onClick(v);
+        const handler = (evt) => onClick(v, evt);
         const x = x0 + (v.start - minTime) / unit;
         const y = offsetY + y0 + i * rowHeight;
         const cy = y + barHeight / 2;
@@ -74,6 +75,7 @@ export default function Bar({
             height={barHeight + 6}
             style={styles.taskHover}
             id={`bar${i}`}
+            onClick={handler}
             onMouseOver={mouseOverHandler}
             onMouseOut={mouseOutHandler}
           />
@@ -89,9 +91,20 @@ export default function Bar({
               height={barHeight}
               style={bar.back}
               onClick={handler}
+              opacity={(markExists && !v.marked[0]) ? '0.5' : '1'}
+              stroke={(markExists && v.marked[0]) ? '#8F7769' : 'none'}
             />
 
-            {w2 > 0.000001 ? <rect x={x} y={y} width={w2} height={barHeight} style={bar.front} /> : null}
+            {w2 > 0.000001 ? (
+              <rect
+                x={x}
+                y={y}
+                width={w2}
+                height={barHeight}
+                style={bar.front}
+                opacity={(markExists && !v.marked[0]) ? '0.5' : '1'}
+              />
+            ) : null}
             {barRect}
             {v.type === 'group' ? null : (
               <g>

@@ -34,6 +34,10 @@ export default class SVGGantt {
     this.options = { ...this.options, ...options };
     this.render();
   }
+  setRanderState(state) {
+    this.options.renderState.preventRender = state;
+    this.render();
+  }
   // eslint-disable-next-line class-methods-use-this
   addScrollBar(scrollBarWidth, offsetY, rowHeight, barHeight) {
     let scrollDistance = 0;
@@ -168,10 +172,77 @@ export default class SVGGantt {
       });
     thumbElement.call(dragBehaviour);
   }
+
+  addRectangularSelection() {
+    function drawRectangle(x, y, wi, hi) {
+      return `M${[x, y]} l${[wi, 0]} l${[0, hi]} l${[-wi, 0]}z`;
+    }
+
+    const rectangle = d3.select('svg').append('path').attr('class', 'rectangle').attr('visibility', 'hidden');
+
+    const startSelection = (start) => {
+      rectangle.attr('d', drawRectangle(start[0], start[0], 0, 0)).attr('visibility', 'visible');
+    };
+
+    const moveSelection = (start, moved) => {
+      rectangle.attr('d', drawRectangle(start[0], start[1], moved[0] - start[0], moved[1] - start[1]));
+    };
+
+    const endSelection = (start, end, event) => {
+      rectangle.attr('visibility', 'hidden');
+
+      // Ignore rectangular markings that were just a click.
+      if (Math.abs(start[0] - end[0]) < 2 || Math.abs(start[1] - end[1]) < 2) {
+        this.options.onClickCancelMerking(event);
+        return;
+      }
+
+      const selectionBox = rectangle.node().getBoundingClientRect();
+      const svgRadarMarkedCircles = d3.selectAll("[id^='bar']").filter((d) => (
+        this.x.baseVal.value >= selectionBox.x &&
+        this.y.baseVal.value >= selectionBox.y &&
+        this.x.baseVal.value + this.width.baseVal.value <= selectionBox.x + selectionBox.width &&
+        this.y.baseVal.value + this.height.baseVal.value <= selectionBox.y + selectionBox.height
+      ));
+
+      if (svgRadarMarkedCircles.size() === 0) {
+        this.options.onClickCancelMerking(event);
+        return;
+      }
+
+      svgRadarMarkedCircles.each(this.mark());
+    };
+
+    d3.select('svg').on('mousedown', (event) => {
+      this.setRanderState(true);
+      if (event.which === 3) {
+        return;
+      }
+      const subject = d3.select(window);
+      const start = d3.pointer(event);
+      startSelection(start);
+      subject
+        .on('mousemove.rectangle', () => {
+          moveSelection(start, d3.pointer(event, d3.select('svg').node()));
+        })
+        .on('mouseup.rectangle', () => {
+          endSelection(start, d3.pointer(event, d3.select('svg').node()), event);
+          subject.on('mousemove.rectangle', null).on('mouseup.rectangle', null);
+        });
+    });
+    d3.select('svg').on('mouseup', () => {
+      this.setRanderState(false);
+    });
+  }
+
   render() {
     const {
       data, start, end, options
     } = this;
+    if (options.renderState.preventRender) {
+      // Early return if the state currently disallows rendering.
+      return;
+    }
     if (this.tree) {
       this.dom.removeChild(this.tree);
     }
@@ -185,5 +256,6 @@ export default class SVGGantt {
     this.dom.appendChild(this.tree);
     this.addScrollBar(options.scrollBarWidth, options.offsetY, options.rowHeight, options.barHeight);
     this.addThumbDragBehaviour(options.sliderWidth);
+    this.addRectangularSelection();
   }
 }

@@ -20,10 +20,13 @@ function NOOP() {}
 export default function Gantt({
   data = [],
   onClick = NOOP,
+  onClickCancelMerking = NOOP,
   onMouseOver = NOOP,
   onMouseOut = NOOP,
   onMouseOverLine = NOOP,
   onMouseOutLine = NOOP,
+  // eslint-disable-next-line no-unused-vars
+  renderState = { preventRender: false },
   viewMode = 'week',
   maxTextWidth = 140,
   sliderWidth = 200,
@@ -54,6 +57,8 @@ export default function Gantt({
   const box = `0 0 ${svgWidth} ${height}`;
   const current = Date.now();
   const styles = getStyles(styleOptions);
+
+  const handler = (evt) => onClickCancelMerking(evt);
 
   return (
     // eslint-disable-next-line no-unused-vars
@@ -98,7 +103,7 @@ export default function Gantt({
           viewModeSliderHeight={viewModeSliderHeight}
         />
       ) : null}
-      <g id="scrollgroup" width={width} height={height - offsetY - viewModeSliderHeight} x="0" y={offsetY + viewModeSliderHeight}>
+      <g id="scrollgroup" width={width} height={height - offsetY - viewModeSliderHeight} x="0" y={offsetY + viewModeSliderHeight} onClick={handler}>
         {maxTextWidth > 0 ? (
           <Labels
             styles={styles}

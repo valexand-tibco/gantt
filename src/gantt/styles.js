@@ -147,6 +147,13 @@ export default function getStyles({
       stroke: '#DCDFE8',
       strokeOpacity: '0',
       cursor: 'pointer'
+    },
+    rectangle: {
+      fill: '#add8e6',
+      stroke: '#add8e6',
+      fillOpacity: '0.3',
+      strokeOpacity: '0.7',
+      strokeWidth: '2'
     }
   };
 }
