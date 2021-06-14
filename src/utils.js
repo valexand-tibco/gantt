@@ -17,6 +17,16 @@ export function getDates(begin, end) {
   return dates;
 }
 
+export function getDatesStrict(begin, end) {
+  const dates = [];
+  let s = new Date(begin);
+  while (s.getTime() <= end) {
+    dates.push(s.getTime());
+    s = addDays(s, 1);
+  }
+  return dates;
+}
+
 let ctx = null;
 export function textWidth(text, font, pad) {
   ctx = ctx || document.createElement('canvas').getContext('2d');

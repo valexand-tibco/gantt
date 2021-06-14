@@ -41,8 +41,13 @@ export default function Gantt({
   showDelay = true,
   start,
   end,
+  chartMinDate,
+  chartMaxDate,
+  initialMinDate,
+  initialMaxDate,
   viewModeSliderHeight = 40,
-  zoomSliderHeight = 40
+  zoomSliderHeight = 40,
+  unitWidth = 16
 }) {
   const unit = UNIT[viewMode];
   const minTime = start.getTime() - unit * 28;
@@ -97,6 +102,11 @@ export default function Gantt({
           offsetY={viewModeSliderHeight + zoomSliderHeight + headerHeight}
           height={height}
           headerHeight={headerHeight}
+          chartMinDate={chartMinDate}
+          chartMaxDate={chartMaxDate}
+          unitWidth={unitWidth}
+          initialMinDate={initialMinDate}
+          initialMaxDate={initialMaxDate}
         />
       </g>
       <CurrentLine
@@ -124,6 +134,11 @@ export default function Gantt({
           width={width}
           viewModeSliderHeight={viewModeSliderHeight}
           zoomSliderHeight={zoomSliderHeight}
+          chartMinDate={chartMinDate}
+          chartMaxDate={chartMaxDate}
+          unitWidth={unitWidth}
+          initialMinDate={initialMinDate}
+          initialMaxDate={initialMaxDate}
         />
       ) : null}
       {viewMode === 'week' ? (

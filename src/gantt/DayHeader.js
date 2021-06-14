@@ -1,21 +1,23 @@
 import h from '../h';
-import { getDates } from '../utils';
+import { getDates, getDatesStrict } from '../utils';
 import YearMonth from './YearMonth';
 
 export default function DayHeader({
-  styles, unit, minTime, maxTime, height, offsetY, maxTextWidth, width, viewModeSliderHeight, zoomSliderHeight
+  styles, unit, minTime, maxTime, height, offsetY, maxTextWidth, width, viewModeSliderHeight, zoomSliderHeight,
+  chartMinDate, chartMaxDate, unitWidth, initialMinDate, initialMaxDate
 }) {
-  const dates = getDates(minTime, maxTime);
+  const dates = getDatesStrict(initialMinDate, initialMaxDate);
   const ticks = [];
   const x0 = maxTextWidth;
   const y0 = viewModeSliderHeight + zoomSliderHeight + offsetY / 2;
   const RH = offsetY / 2;
+  let x = x0;
+  const days = (chartMaxDate - chartMinDate) / (1000 * 3600 * 24);
   const len = dates.length - 1;
   const minDate = dates[0];
   const maxDate = dates[len];
-  const dayWidth = 30;
-  let x = x0;
-  for (let i = 0; i < len; i++) {
+  const dayWidth = unitWidth;
+  for (let i = 0; i <= len; i++) {
     const cur = new Date(dates[i]);
     const day = cur.getDay();
     if (i === 0) {
@@ -26,12 +28,12 @@ export default function DayHeader({
     ticks.push((
       <g>
         {day === 0 || day === 6 ? (
-          <rect x={x} y={y0} width={dayWidth} height={RH} style={styles.weekEven} />
+          <rect class="weekend-days" x={x} y={y0} width={dayWidth} height={RH} style={styles.weekEven} />
         ) : null}
-        {i !== 0 && i !== len - 1 ? (
-          <line x1={x} x2={x} y1={y0} y2={y0 + RH} style={styles.line} />
+        {i !== 0 ? (
+          <line class="day-lines" x1={x} x2={x} y1={y0} y2={y0 + RH} style={styles.line} />
         ) : null}
-        <text x={x + dayWidth / 2} y={viewModeSliderHeight + zoomSliderHeight + offsetY * 0.75} style={styles.text3}>{cur.getDate()}</text>
+        <text class="day-text" x={x + dayWidth / 2} y={viewModeSliderHeight + zoomSliderHeight + offsetY * 0.75} style={styles.text3}>{cur.getDate()}</text>
       </g>
     ));
   }

@@ -5,7 +5,7 @@ import Gantt from './gantt';
 import render from './render/svg';
 import { getFont } from './gantt/styles';
 import {
-  minDate, maxDate, textWidth, max, getTranslation
+  minDate, maxDate, textWidth, max, getTranslation, DAY, getDatesStrict
 } from './utils';
 
 export default class SVGGantt {
@@ -13,6 +13,29 @@ export default class SVGGantt {
     this.dom = typeof element === 'string' ? document.querySelector(element) : element;
     this.format(data);
     this.options = options;
+
+    if (this.options.maxTextWidth === undefined) {
+      const font = getFont(options.styleOptions || {});
+      const w = (v) => textWidth(v.text, font, 20);
+      this.options.maxTextWidth = max(data.map(w), 0);
+    }
+
+    const chartMinDate = new Date(this.start);
+    const chartMaxDate = new Date(this.end);
+    chartMinDate.setDate(chartMinDate.getDate() - 1);
+    chartMaxDate.setDate(chartMaxDate.getDate() + 1);
+    this.chartMinDate = chartMinDate;
+    this.chartMaxDate = chartMaxDate;
+    this.initialMinDate = chartMinDate;
+    this.initialMaxDate = chartMaxDate;
+    const days = (chartMaxDate - chartMinDate) / (1000 * 3600 * 24) + 1;
+
+    this.scaleFactor = 1;
+    this.totalDays = days;
+
+    const visibleDataWidth = this.options.maxWidth - this.options.maxTextWidth;
+    const dataWidth = visibleDataWidth / this.scaleFactor;
+    this.unitWidth = dataWidth / days;
     this.render();
   }
   format(data) {
@@ -40,9 +63,11 @@ export default class SVGGantt {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  addScrollBar(scrollBarThickness, headerHeight, rowHeight, barHeight, maxTextWidth, zoomSliderHeight, viewModeSliderHeight, width, styleOptions) {
+  addScrollBar(scrollBarThickness, headerHeight, rowHeight, barHeight, maxTextWidth, zoomSliderHeight,
+    viewModeSliderHeight, width, styleOptions, data, start, end) {
     let verticalScrollDistance = 0;
-    let horizontalScrollDistance = 0;
+
+    const styles = styleOptions;
 
     const root = d3.select('#scrollgroup')
       .attr('clip-path', 'url(#scrollbox-clip-path)');
@@ -60,7 +85,7 @@ export default class SVGGantt {
 
     const contentItems = root.selectAll('*');
     const content = root.append('g')
-      // .attr('transform', `translate(${rootBBox.x},${rootBBox.y})`);
+      .attr('id', 'GanttContent')
       .attr('transform', `translate(${0},${0})`);
     const contenItemsNodes = contentItems.nodes();
     for (let i = 0; i < contenItemsNodes.length; i++) {
@@ -88,51 +113,15 @@ export default class SVGGantt {
       .attr('ry', scrollBarThickness / 2)
       .attr('opacity', 0)
       .attr('fill', 'rgba(0, 0, 0, 0.3)')
-      // .attr('transform', `translate(${rootBBox.x + rootBBox.width},${rootBBox.y})`);
       .attr('transform', `translate(${rootBBox.x + rootBBox.width},${rootBBox.y + headerHeight})`);
-
-    const outerZoomSlider = parent.append('rect')
-      .attr('width', width)
-      .attr('x', '0')
-      .attr('y', viewModeSliderHeight + zoomSliderHeight / 2 - scrollBarThickness)
-      .attr('height', scrollBarThickness)
-      .attr('rx', scrollBarThickness / 4)
-      .attr('ry', scrollBarThickness / 4)
-      .attr('fill', '#F0F1F2');
-
-    const horizontalScrollBar = parent.append('rect')
-      .attr('style', 'cursor:pointer')
-      .attr('height', scrollBarThickness)
-      .attr('rx', scrollBarThickness / 2)
-      .attr('ry', scrollBarThickness / 2)
-      .attr('opacity', 0)
-      .attr('fill', 'rgba(0, 0, 0, 0.3)')
-      // .attr('transform', `translate(${rootBBox.x},${rootBBox.y + rootBBox.height})`);
-      .attr('transform', `translate(${0},${viewModeSliderHeight + zoomSliderHeight / 2 - scrollBarThickness})`);
-
-    const thumbWidth = 16;
-
-    const rightThumb = parent.append('rect')
-      .attr('style', 'cursor:pointer; stroke:#8F9299')
-      .attr('width', thumbWidth)
-      .attr('height', thumbWidth)
-      .attr('rx', thumbWidth / 4)
-      .attr('ry', thumbWidth / 4)
-      .attr('fill', '#F8F8F8')
-      .attr('transform', `translate(${0},${viewModeSliderHeight + zoomSliderHeight / 2 - scrollBarThickness - thumbWidth / 4})`);
 
     const contentBBox = content.node().getBBox();
     const absoluteContentWidth = contentBBox.x + contentBBox.width;
     const absoluteContentHeight = contentBBox.y + contentBBox.height;
 
-    // const scrollbarHeight = rootBBox.height * rootBBox.height / absoluteContentHeight;
     const scrollbarHeight = rootBBox.height * rootBBox.height / absoluteContentHeight - headerHeight;
-    // const scrollbarWidth = rootBBox.width * rootBBox.width / absoluteContentWidth;
-    const scrollbarWidth = rootBBox.width * rootBBox.width / absoluteContentWidth;
     verticalScrollBar.attr('height', scrollbarHeight);
-    horizontalScrollBar.attr('width', scrollbarWidth);
 
-    // const maxVerticalScroll = Math.max(absoluteContentHeight - rootBBox.height + (rowHeight - barHeight) / 2, 0);
     const maxVerticalScroll = Math.max(absoluteContentHeight - rootBBox.height + (rowHeight - barHeight) / 2 - viewModeSliderHeight - zoomSliderHeight - 8, 0);
     const maxHorizontalScroll = Math.max(absoluteContentWidth - rootBBox.width, 0);
 
@@ -153,37 +142,18 @@ export default class SVGGantt {
       if (!Number.isNaN(scrollBarPosition)) verticalScrollBar.attr('y', scrollBarPosition);
     }
 
-    function updateHorizontalScrollPosition(diff) {
-      horizontalScrollDistance += diff;
-      horizontalScrollDistance = Math.max(0, horizontalScrollDistance);
-      horizontalScrollDistance = Math.min(maxHorizontalScroll, horizontalScrollDistance);
-
-      const yValue = getTranslation(content.attr('transform'))[1];
-
-      // content.attr('transform', `translate(${rootBBox.x - horizontalScrollDistance},${yValue})`);
-      content.attr('transform', `translate(${-horizontalScrollDistance},${yValue})`);
-      // header.attr('transform', `translate(${rootBBox.x - horizontalScrollDistance},${0})`);
-      header.attr('transform', `translate(${-horizontalScrollDistance},${0})`);
-      // const scrollBarPosition = horizontalScrollDistance / maxHorizontalScroll * (rootBBox.width - scrollbarWidth);
-      const scrollBarPosition = horizontalScrollDistance / maxHorizontalScroll * (rootBBox.width - scrollbarWidth);
-      if (!Number.isNaN(scrollBarPosition)) horizontalScrollBar.attr('x', scrollBarPosition);
-    }
-
     root.on('wheel', () => {
       // eslint-disable-next-line no-restricted-globals
       updateVerticalScrollPosition(event.deltaY);
     });
 
     let isVerticalDragging = false;
-    let isHorizontalDragging = false;
     parent.on('mouseenter', () => {
       verticalScrollBar.attr('opacity', 1);
-      horizontalScrollBar.attr('opacity', 1);
     });
     parent.on('mouseleave', () => {
-      if (!isVerticalDragging && !isHorizontalDragging) {
+      if (!isVerticalDragging) {
         verticalScrollBar.attr('opacity', 0);
-        horizontalScrollBar.attr('opacity', 0);
       }
     });
 
@@ -198,9 +168,108 @@ export default class SVGGantt {
         isVerticalDragging = false;
       });
 
+    verticalScrollBar.call(verticalDragBehaviour);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  addZoomSlider(scrollBarThickness, headerHeight, rowHeight, barHeight, maxTextWidth, zoomSliderHeight,
+    viewModeSliderHeight, width, styleOptions, data, start, end) {
+    const horizontalScrollDistance = 0;
+    const horizontalXOffset = maxTextWidth;
+
+    const root = d3.select('#scrollgroup');
+    const parent = d3.select(root.node().parentNode);
+
+    const outerZoomSlider = parent.append('rect')
+      .attr('id', 'OuterZoomSlider')
+      .attr('width', width - horizontalXOffset)
+      .attr('x', horizontalXOffset)
+      .attr('y', viewModeSliderHeight + zoomSliderHeight / 2 - scrollBarThickness)
+      .attr('height', scrollBarThickness)
+      // .attr('rx', scrollBarThickness / 4)
+      // .attr('ry', scrollBarThickness / 4)
+      .attr('rx', scrollBarThickness)
+      .attr('ry', scrollBarThickness)
+      .attr('fill', '#F0F1F2');
+
+    const horizontalScrollBar = parent.append('rect')
+      .attr('class', 'HorizontalScrollBar')
+      .attr('style', 'cursor:pointer')
+      .attr('height', scrollBarThickness)
+      .attr('rx', scrollBarThickness / 2)
+      .attr('ry', scrollBarThickness / 2)
+      .attr('opacity', 1)
+      .attr('fill', 'rgba(0, 0, 0, 0.3)')
+      // .attr('transform', `translate(${rootBBox.x},${rootBBox.y + rootBBox.height})`);
+      .attr('x', horizontalXOffset)
+      .attr('y', viewModeSliderHeight + zoomSliderHeight / 2 - scrollBarThickness);
+      // .attr('transform', `translate(${horizontalXOffset},${viewModeSliderHeight + zoomSliderHeight / 2 - scrollBarThickness})`);
+
+    const thumbWidth = 16;
+
+    let scrollbarWidth = (width - horizontalXOffset) / (1 / this.scaleFactor);
+    horizontalScrollBar.attr('width', scrollbarWidth);
+
+    const leftThumb = parent.append('rect')
+      .attr('style', 'cursor:pointer; stroke:#8F9299')
+      .attr('width', thumbWidth)
+      .attr('height', thumbWidth)
+      .attr('rx', thumbWidth / 4)
+      .attr('ry', thumbWidth / 4)
+      .attr('fill', '#F8F8F8')
+      .attr('x', horizontalXOffset)
+      .attr('y', viewModeSliderHeight + zoomSliderHeight / 2 - scrollBarThickness - thumbWidth / 4);
+
+    const rightThumb = parent.append('rect')
+      .attr('style', 'cursor:pointer; stroke:#8F9299')
+      .attr('width', thumbWidth)
+      .attr('height', thumbWidth)
+      .attr('rx', thumbWidth / 4)
+      .attr('ry', thumbWidth / 4)
+      .attr('fill', '#F8F8F8')
+      .attr('x', horizontalXOffset + scrollbarWidth - thumbWidth)
+      .attr('y', viewModeSliderHeight + zoomSliderHeight / 2 - scrollBarThickness - thumbWidth / 4);
+
+    let isHorizontalDragging = false;
+
+    const outerWidth = parseFloat(outerZoomSlider.attr('width'));
+    const outerX = parseFloat(outerZoomSlider.attr('x'));
+
+    const visibleDataWidth = width - maxTextWidth;
+
     const horizontalDragBehaviour = d3.drag()
       .on('drag', (event) => {
-        updateHorizontalScrollPosition(event.dx * maxHorizontalScroll / (rootBBox.width - scrollbarWidth));
+        const currentSliderX = parseFloat(horizontalScrollBar.attr('x'));
+        const currentLeftThumbX = parseFloat(leftThumb.attr('x'));
+        const currentRightThumbX = parseFloat(rightThumb.attr('x'));
+        const rightMargin = parseFloat(outerZoomSlider.attr('x')) + outerWidth;
+        const leftMargin = parseFloat(outerZoomSlider.attr('x'));
+
+        if (currentSliderX + event.dx > leftMargin && currentSliderX + scrollbarWidth + event.dx < rightMargin) {
+          horizontalScrollBar.attr('x', currentSliderX + event.dx);
+          leftThumb.attr('x', currentLeftThumbX + event.dx);
+          rightThumb.attr('x', currentRightThumbX + event.dx);
+
+          const oneDayWidth = outerWidth / this.totalDays;
+          const daysToModify = Math.floor((currentSliderX + event.dx - outerX) / oneDayWidth);
+          const newMinDate = new Date(this.initialMinDate);
+          const newMaxDate = new Date(this.initialMaxDate);
+          newMinDate.setDate(newMinDate.getDate() + daysToModify);
+          newMaxDate.setDate(newMaxDate.getDate() + daysToModify);
+          if (newMinDate.getTime() !== this.chartMaxDate.getTime()) {
+            this.chartMinDate = newMinDate;
+            this.chartMaxDate = newMaxDate;
+            this.update();
+          }
+        }
+
+        // const scrollBarPosition = horizontalScrollDistance / maxHorizontalScroll * (rootBBox.width - scrollbarWidth);
+        // if (!Number.isNaN(scrollBarPosition)) {
+        //   const horizontalFactor = horizontalXOffset * scrollBarPosition / (width - scrollbarWidth);
+        //   horizontalScrollBar.attr('x', horizontalXOffset + scrollBarPosition - horizontalFactor);
+        //   leftThumb.attr('x', horizontalXOffset + scrollBarPosition - horizontalFactor);
+        //   rightThumb.attr('x', horizontalXOffset + scrollBarPosition + scrollbarWidth - thumbWidth - horizontalFactor);
+        // }
       })
       .on('start', (event) => {
         isHorizontalDragging = true;
@@ -209,8 +278,73 @@ export default class SVGGantt {
         isHorizontalDragging = false;
       });
 
-    verticalScrollBar.call(verticalDragBehaviour);
+    const leftThumbDragBehaviour = d3.drag()
+      .on('drag', (event) => {
+        const currentX = parseFloat(leftThumb.attr('x'));
+        const leftMargin = parseFloat(outerZoomSlider.attr('x'));
+        const rightMargin = parseFloat(rightThumb.attr('x')) - thumbWidth;
+        if (currentX + event.dx > leftMargin && currentX + event.dx < rightMargin) {
+          leftThumb.attr('x', currentX + event.dx);
+          scrollbarWidth -= event.dx;
+          let curretnScrollX = parseFloat(horizontalScrollBar.attr('x'));
+          curretnScrollX += event.dx;
+          horizontalScrollBar.attr('width', scrollbarWidth);
+          horizontalScrollBar.attr('x', curretnScrollX);
+
+          const oneDayWidth = outerWidth / this.totalDays;
+          const daysToModify = Math.floor((outerWidth - scrollbarWidth) / oneDayWidth);
+          const newMinDate = new Date(this.initialMinDate);
+          newMinDate.setDate(newMinDate.getDate() + daysToModify);
+          if (newMinDate.getTime() !== this.chartMinDate.getTime()) {
+            const days = this.totalDays - daysToModify;
+
+            this.chartMinDate = newMinDate;
+            this.unitWidth = visibleDataWidth / days;
+
+            this.update();
+          }
+        }
+      })
+      .on('start', (event) => {
+      })
+      .on('end', (event) => {
+      });
+
+    const rightThumbDragBehaviour = d3.drag()
+      .on('drag', (event) => {
+        const currentX = parseFloat(rightThumb.attr('x'));
+        const rightMargin = parseFloat(outerZoomSlider.attr('x')) + outerWidth - thumbWidth;
+        const leftMargin = parseFloat(leftThumb.attr('x')) + thumbWidth;
+        if (currentX + event.dx > leftMargin && currentX + event.dx < rightMargin) {
+          rightThumb.attr('x', currentX + event.dx);
+          scrollbarWidth += event.dx;
+          horizontalScrollBar.attr('width', scrollbarWidth);
+
+          this.scaleFactor = scrollbarWidth / outerWidth;
+
+          const oneDayWidth = outerWidth / this.totalDays;
+          const daysToModify = Math.floor((outerWidth - scrollbarWidth) / oneDayWidth);
+          const newMaxDate = new Date(this.initialMaxDate);
+          newMaxDate.setDate(newMaxDate.getDate() - daysToModify);
+          if (newMaxDate.getTime() !== this.chartMaxDate.getTime()) {
+            const days = this.totalDays - daysToModify;
+
+            this.chartMaxDate = newMaxDate;
+            this.unitWidth = visibleDataWidth / days;
+
+            this.update();
+          }
+        }
+      })
+      .on('start', (event) => {
+      })
+      .on('end', (event) => {
+
+      });
+
     horizontalScrollBar.call(horizontalDragBehaviour);
+    leftThumb.call(leftThumbDragBehaviour);
+    rightThumb.call(rightThumbDragBehaviour);
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -320,7 +454,7 @@ export default class SVGGantt {
 
   render() {
     const {
-      data, start, end, options
+      data, start, end, options, chartMinDate, chartMaxDate, initialMinDate, initialMaxDate
     } = this;
     if (options.renderState.preventRender) {
       // Early return if the state currently disallows rendering.
@@ -334,12 +468,111 @@ export default class SVGGantt {
       const w = (v) => textWidth(v.text, font, 20);
       options.maxTextWidth = max(data.map(w), 0);
     }
-    const props = { ...options, start, end };
+    options.unitWidth = this.unitWidth;
+
+    const props = {
+      ...options, start, end, chartMinDate, chartMaxDate, initialMinDate, initialMaxDate
+    };
     this.tree = render(<Gantt data={data} {...props} />);
     this.dom.appendChild(this.tree);
+
     this.addScrollBar(options.scrollBarThickness, options.headerHeight, options.rowHeight, options.barHeight, options.maxTextWidth,
-      options.zoomSliderHeight, options.viewModeSliderHeight, options.maxWidth, options.styleOptions);
+      options.zoomSliderHeight, options.viewModeSliderHeight, options.maxWidth, options.styleOptions, data, start, end);
+    this.addZoomSlider(options.scrollBarThickness, options.headerHeight, options.rowHeight, options.barHeight, options.maxTextWidth,
+      options.zoomSliderHeight, options.viewModeSliderHeight, options.maxWidth, options.styleOptions, data, start, end);
     this.addThumbDragBehaviour(options.sliderWidth);
     this.addRectangularSelection();
+
+    const dayHeader = d3.select('#DayHeader');
+    this.dayTexts = dayHeader.selectAll('.day-text');
+    this.dayLines = dayHeader.selectAll('.day-lines');
+    this.weekendDays = dayHeader.selectAll('.weekend-days');
+
+    const scrollgroup = d3.select('#scrollgroup');
+    this.chartLines = scrollgroup.selectAll('.chart-line');
+    this.chartWeekendDays = scrollgroup.selectAll('.chart-weekend-day');
+    this.backBars = scrollgroup.selectAll('.back-bar');
+    this.frontBars = scrollgroup.selectAll('.front-bar');
+    this.barStartDate = scrollgroup.selectAll('.bar-start-date');
+    this.barEndDate = scrollgroup.selectAll('.bar-end-date');
+    this.barHover = scrollgroup.selectAll('.bar-hover');
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  update() {
+    const dates = getDatesStrict(this.initialMinDate, this.initialMaxDate);
+    const leftOffset = (this.chartMinDate - this.initialMinDate) / DAY * this.unitWidth;
+    const len = dates.length - 1;
+    let x = this.options.maxTextWidth - leftOffset;
+    let j = 0;
+    for (let i = 0; i <= len; i++) {
+      const cur = new Date(dates[i]);
+      const day = cur.getDay();
+      d3.select(this.dayTexts.nodes()[i]).attr('x', x + this.unitWidth / 2);
+      if (day === 0 || day === 6) {
+        d3.select(this.weekendDays.nodes()[j]).attr('x', x);
+        d3.select(this.weekendDays.nodes()[j]).attr('width', this.unitWidth);
+        d3.select(this.chartWeekendDays.nodes()[j]).attr('x', x);
+        d3.select(this.chartWeekendDays.nodes()[j]).attr('width', this.unitWidth);
+        j += 1;
+      }
+      x += this.unitWidth;
+      d3.select(this.dayLines.nodes()[i]).attr('x1', x);
+      d3.select(this.dayLines.nodes()[i]).attr('x2', x);
+      d3.select(this.chartLines.nodes()[i]).attr('x1', x);
+      d3.select(this.chartLines.nodes()[i]).attr('x2', x);
+    }
+
+    for (let i = 0; i < this.data.length; i++) {
+      const currentBar = this.data[i];
+      const newX = this.options.maxTextWidth + (currentBar.start - this.chartMinDate) / DAY * this.unitWidth;
+      let barWidth = (currentBar.end - currentBar.start) / DAY * this.unitWidth;
+
+      if (barWidth === 0) {
+        barWidth = this.unitWidth / 2;
+      }
+
+      d3.select(this.backBars.nodes()[i]).attr('x', newX);
+      d3.select(this.backBars.nodes()[i]).attr('width', barWidth);
+
+      d3.select(this.frontBars.nodes()[i]).attr('x', newX);
+      d3.select(this.frontBars.nodes()[i]).attr('width', barWidth * currentBar.percent);
+
+      d3.select(this.barHover.nodes()[i]).attr('x', newX - 3);
+      d3.select(this.barHover.nodes()[i]).attr('width', barWidth + 6);
+
+      d3.select(this.barStartDate.nodes()[i]).attr('x', newX - 4);
+      d3.select(this.barEndDate.nodes()[i]).attr('x', newX + barWidth + 4);
+    }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  updateChart() {
+    const content = d3.select('#GanttContent');
+    content.selectAll('*').remove();
+
+    const dates = getDatesStrict(this.chartMinDate, this.chartMaxDate);
+    const len = dates.length - 1;
+    let x = this.options.maxTextWidth;
+
+    const offsetY = this.options.viewModeSliderHeight + this.options.zoomSliderHeight + this.options.headerHeight;
+
+    for (let i = 0; i <= len; i++) {
+      const cur = new Date(dates[i]);
+      const day = cur.getDay();
+
+      content.append('line')
+        .attr('x1', x)
+        .attr('x2', x)
+        .attr('y1', offsetY)
+        .attr('y2', this.data.length * this.options.rowHeight + offsetY)
+        .style('stroke', '#DCDFE8')
+        .style('stroke-width', '1px');
+
+      x += this.unitWidth;
+
+      // d3.select(this.chartLines.nodes()[i]).attr('x1', x);
+      // d3.select(this.chartLines.nodes()[i]).attr('x2', x);
+    }
   }
 }

@@ -1,36 +1,36 @@
 import * as d3 from 'd3';
 import h from '../h';
-import { formatDay, getDates } from '../utils';
+import { formatDay, getDatesStrict } from '../utils';
 
 export default function Bar({
   styles, data, unit, minTime, showDelay, rowHeight, barHeight, maxTextWidth, current, onClick, maxTime,
-  onMouseOver, onMouseOut, offsetY
+  onMouseOver, onMouseOut, offsetY, unitWidth, chartMinDate, chartMaxDate, initialMinDate, initialMaxDate
 }) {
   const lines = [];
-  const dates = getDates(minTime, maxTime);
+  // const dates = getDates(minTime, maxTime);
+  const dates = getDatesStrict(chartMinDate, chartMaxDate);
   const len = dates.length - 1;
   const x0 = maxTextWidth;
   const y0 = (rowHeight - barHeight) / 2;
   const cur = x0 + (current - minTime) / unit;
   const markExists = data.find((r) => r.marked[0]);
-  const dayWidth = 30;
   const RH = offsetY / 2;
   let lineX = x0;
-  for (let i = 0; i < len; i++) {
+  for (let i = 0; i <= len; i++) {
     const currentDay = new Date(dates[i]);
     const day = currentDay.getDay();
     if (i === 0) {
       lineX = x0;
     } else {
-      lineX += dayWidth;
+      lineX += unitWidth;
     }
     lines.push((
       <g>
         {day === 0 || day === 6 ? (
-          <rect x={lineX} y={y0} width={dayWidth} height={RH} style={styles.weekEven} />
+          <rect class="chart-weekend-day" x={lineX} y={offsetY} width={unitWidth} height={data.length * rowHeight} style={styles.weekEven} />
         ) : null}
-        {i !== 0 && i !== len - 1 ? (
-          <line x1={lineX} x2={lineX} y1={offsetY} y2={data.length * rowHeight + offsetY} style={styles.line} />
+        {i !== 0 ? (
+          <line class="chart-line" x1={lineX} x2={lineX} y1={offsetY} y2={data.length * rowHeight + offsetY} style={styles.line} />
         ) : null}
       </g>
     ));
@@ -43,7 +43,8 @@ export default function Bar({
           return null;
         }
         const handler = (evt) => onClick(v, evt);
-        const x = x0 + (v.start - minTime) / unit;
+        // const x = x0 + (v.start - minTime) / unit;
+        const x = x0 + (v.start - minTime) / (1000 * 3600 * 24) * unitWidth;
         const y = offsetY + y0 + i * rowHeight;
         const cy = y + barHeight / 2;
         if (v.type === 'milestone') {
@@ -61,9 +62,11 @@ export default function Bar({
             </g>
           );
         }
-        let w1 = (v.end - v.start) / unit;
+        // let w1 = (v.end - v.start) / unit;
+        const days = (v.end - v.start) / (1000 * 3600 * 24);
+        let w1 = days * unitWidth;
         if (w1 === 0) {
-          w1 = 4;
+          w1 = unitWidth / 2;
         }
         const w2 = w1 * v.percent;
         const bar = v.type === 'group' ? {
@@ -95,6 +98,7 @@ export default function Bar({
         };
         const barRect = (
           <rect
+            class="bar-hover"
             x={x - 3}
             y={y - 3}
             width={w1 + 6}
@@ -108,9 +112,10 @@ export default function Bar({
         );
         return (
           <g key={i} class="gantt-bar" style={{ cursor: 'pointer' }} onClick={handler} onMouseOver={mouseOverHandler} onMouseOut={mouseOutHandler}>
-            <text x={x - 4} y={cy} style={styles.text1}>{formatDay(v.start)}</text>
-            <text x={x + w1 + 4} y={cy} style={styles.text2}>{formatDay(v.end)}</text>
+            <text class="bar-start-date" x={x - 4} y={cy} style={styles.text1}>{formatDay(v.start)}</text>
+            <text class="bar-end-date" x={x + w1 + 4} y={cy} style={styles.text2}>{formatDay(v.end)}</text>
             <rect
+              class="back-bar"
               x={x}
               y={y}
               width={w1}
@@ -123,6 +128,7 @@ export default function Bar({
 
             {w2 > 0.000001 ? (
               <rect
+                class="front-bar"
                 x={x}
                 y={y}
                 width={w2}
