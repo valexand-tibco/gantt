@@ -3,8 +3,8 @@ import h from '../h';
 import { formatDay, getDatesStrict } from '../utils';
 
 export default function Bar({
-  styles, data, unit, minTime, showDelay, rowHeight, barHeight, maxTextWidth, current, onClick, maxTime,
-  onMouseOver, onMouseOut, offsetY, unitWidth, chartMinDate, chartMaxDate, initialMinDate, initialMaxDate
+  styles, data, unit, minTime, showDelay, rowHeight, barHeight, maxTextWidth, current, onClick,
+  onMouseOver, onMouseOut, offsetY, unitWidth, chartMinDate, chartMaxDate
 }) {
   const lines = [];
   // const dates = getDates(minTime, maxTime);
@@ -13,8 +13,7 @@ export default function Bar({
   const x0 = maxTextWidth;
   const y0 = (rowHeight - barHeight) / 2;
   const cur = x0 + (current - minTime) / unit;
-  const markExists = data.find((r) => r.marked[0]);
-  const RH = offsetY / 2;
+  // const markExists = data.find((r) => r.marked[0]);
   let lineX = x0;
   for (let i = 0; i <= len; i++) {
     const currentDay = new Date(dates[i]);
@@ -122,8 +121,8 @@ export default function Bar({
               height={barHeight}
               style={bar.back}
               onClick={handler}
-              opacity={(markExists && !v.marked[0]) ? '0.5' : '1'}
-              stroke={(markExists && v.marked[0]) ? '#8F7769' : 'none'}
+              // opacity={(markExists && !v.marked[0]) ? '0.5' : '1'}
+              // stroke={(markExists && v.marked[0]) ? '#8F7769' : 'none'}
             />
 
             {w2 > 0.000001 ? (
@@ -134,7 +133,7 @@ export default function Bar({
                 width={w2}
                 height={barHeight}
                 style={bar.front}
-                opacity={(markExists && !v.marked[0]) ? '0.5' : '1'}
+                // opacity={(markExists && !v.marked[0]) ? '0.5' : '1'}
               />
             ) : null}
             {barRect}

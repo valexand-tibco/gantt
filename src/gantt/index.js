@@ -1,6 +1,5 @@
 import h from '../h';
 import { DAY } from '../utils';
-import DayHeader from './DayHeader';
 import WeekHeader from './WeekHeader';
 import MonthHeader from './MonthHeader';
 import Labels from './Labels';
@@ -8,7 +7,6 @@ import LinkLine from './LinkLine';
 import Bar from './Bar';
 import CurrentLine from './CurrentLine';
 import getStyles from './styles';
-import ViewModeSlider from './ViewModeSlider';
 
 const UNIT = {
   day: DAY / 28,
@@ -29,7 +27,6 @@ export default function Gantt({
   renderState = { preventRender: false },
   viewMode = 'week',
   maxTextWidth = 140,
-  sliderWidth = 200,
   headerHeight = 60,
   rowHeight = 40,
   barHeight = 16,
@@ -43,8 +40,6 @@ export default function Gantt({
   end,
   chartMinDate,
   chartMaxDate,
-  initialMinDate,
-  initialMaxDate,
   viewModeSliderHeight = 40,
   zoomSliderHeight = 40,
   unitWidth = 16
@@ -91,7 +86,6 @@ export default function Gantt({
           unit={unit}
           current={current}
           minTime={minTime}
-          maxTime={maxTime}
           onClick={onClick}
           onMouseOver={onMouseOver}
           onMouseOut={onMouseOut}
@@ -105,8 +99,6 @@ export default function Gantt({
           chartMinDate={chartMinDate}
           chartMaxDate={chartMaxDate}
           unitWidth={unitWidth}
-          initialMinDate={initialMinDate}
-          initialMaxDate={initialMaxDate}
         />
       </g>
       <CurrentLine
@@ -123,23 +115,24 @@ export default function Gantt({
         onMouseOut={onMouseOutLine}
       />
       {viewMode === 'day' ? (
-        <DayHeader
-          styles={styles}
-          unit={unit}
-          height={height}
-          offsetY={headerHeight}
-          minTime={minTime}
-          maxTime={maxTime}
-          maxTextWidth={maxTextWidth}
-          width={width}
-          viewModeSliderHeight={viewModeSliderHeight}
-          zoomSliderHeight={zoomSliderHeight}
-          chartMinDate={chartMinDate}
-          chartMaxDate={chartMaxDate}
-          unitWidth={unitWidth}
-          initialMinDate={initialMinDate}
-          initialMaxDate={initialMaxDate}
-        />
+        <g id="DayHeader" />
+        // <DayHeader
+        //   styles={styles}
+        //   unit={unit}
+        //   height={height}
+        //   offsetY={headerHeight}
+        //   minTime={minTime}
+        //   maxTime={maxTime}
+        //   maxTextWidth={maxTextWidth}
+        //   width={width}
+        //   viewModeSliderHeight={viewModeSliderHeight}
+        //   zoomSliderHeight={zoomSliderHeight}
+        //   chartMinDate={chartMinDate}
+        //   chartMaxDate={chartMaxDate}
+        //   unitWidth={unitWidth}
+        //   initialMinDate={initialMinDate}
+        //   initialMaxDate={initialMaxDate}
+        // />
       ) : null}
       {viewMode === 'week' ? (
         <WeekHeader
@@ -182,7 +175,7 @@ export default function Gantt({
           headerHeight={headerHeight}
         />
       ) : null}
-      <ViewModeSlider sliderWidth={sliderWidth} styles={styles} width={width} maxTextWidth={maxTextWidth} viewMode={viewMode} />
+      {/* <ViewModeSlider sliderWidth={sliderWidth} styles={styles} width={width} maxTextWidth={maxTextWidth} viewMode={viewMode} /> */}
       <g>
         <rect x={0} y={0} width={maxTextWidth} height={headerHeight + viewModeSliderHeight + zoomSliderHeight} fill="white" />
         <rect x={width} y={0} width={scrollBarThickness} height={headerHeight + viewModeSliderHeight + zoomSliderHeight} fill="white" />

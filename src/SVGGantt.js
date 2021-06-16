@@ -5,7 +5,7 @@ import Gantt from './gantt';
 import render from './render/svg';
 import { getFont } from './gantt/styles';
 import {
-  minDate, maxDate, textWidth, max, getTranslation, DAY, getDatesStrict
+  minDate, maxDate, textWidth, max, getTranslation, DAY, getDatesStrict, formatDay, getNumberOfDays
 } from './utils';
 
 export default class SVGGantt {
@@ -28,14 +28,29 @@ export default class SVGGantt {
     this.chartMaxDate = chartMaxDate;
     this.initialMinDate = chartMinDate;
     this.initialMaxDate = chartMaxDate;
-    const days = (chartMaxDate - chartMinDate) / (1000 * 3600 * 24) + 1;
+    this.dates = getDatesStrict(this.initialMinDate, this.initialMaxDate);
+    this.leftIndex = 0;
+    this.rightIndex = this.dates.length - 1;
 
     this.scaleFactor = 1;
-    this.totalDays = days;
+    this.totalDays = this.dates.length;
+    this.visibleDates = this.dates.length;
 
-    const visibleDataWidth = this.options.maxWidth - this.options.maxTextWidth;
-    const dataWidth = visibleDataWidth / this.scaleFactor;
-    this.unitWidth = dataWidth / days;
+    this.visibleDataWidth = this.options.maxWidth - this.options.maxTextWidth;
+    const dataWidth = this.visibleDataWidth / this.scaleFactor;
+    this.unitWidth = dataWidth / this.visibleDates;
+
+    this.thumbWidth = 16;
+    this.headerUnitWidth = (this.options.maxWidth - this.options.maxTextWidth - 2 * this.thumbWidth) / this.totalDays;
+    this.daysScale = d3.scaleLinear().domain([this.options.maxTextWidth,
+      this.options.maxWidth - 2 * this.thumbWidth - this.headerUnitWidth]).range([0, this.totalDays - 1]);
+    this.dataScale = d3.scaleLinear().domain([0, this.totalDays - 1]).range([this.options.maxTextWidth, this.options.maxWidth]);
+
+    this.zoomSlider = {
+      x: this.options.maxTextWidth,
+      width: this.options.maxWidth - this.options.maxTextWidth
+    };
+
     this.render();
   }
   format(data) {
@@ -63,11 +78,8 @@ export default class SVGGantt {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  addScrollBar(scrollBarThickness, headerHeight, rowHeight, barHeight, maxTextWidth, zoomSliderHeight,
-    viewModeSliderHeight, width, styleOptions, data, start, end) {
+  addScrollBar(scrollBarThickness, headerHeight, rowHeight, barHeight, zoomSliderHeight, viewModeSliderHeight) {
     let verticalScrollDistance = 0;
-
-    const styles = styleOptions;
 
     const root = d3.select('#scrollgroup')
       .attr('clip-path', 'url(#scrollbox-clip-path)');
@@ -116,14 +128,12 @@ export default class SVGGantt {
       .attr('transform', `translate(${rootBBox.x + rootBBox.width},${rootBBox.y + headerHeight})`);
 
     const contentBBox = content.node().getBBox();
-    const absoluteContentWidth = contentBBox.x + contentBBox.width;
     const absoluteContentHeight = contentBBox.y + contentBBox.height;
 
     const scrollbarHeight = rootBBox.height * rootBBox.height / absoluteContentHeight - headerHeight;
     verticalScrollBar.attr('height', scrollbarHeight);
 
     const maxVerticalScroll = Math.max(absoluteContentHeight - rootBBox.height + (rowHeight - barHeight) / 2 - viewModeSliderHeight - zoomSliderHeight - 8, 0);
-    const maxHorizontalScroll = Math.max(absoluteContentWidth - rootBBox.width, 0);
 
     function updateVerticalScrollPosition(diff) {
       verticalScrollDistance += diff;
@@ -172,9 +182,7 @@ export default class SVGGantt {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  addZoomSlider(scrollBarThickness, headerHeight, rowHeight, barHeight, maxTextWidth, zoomSliderHeight,
-    viewModeSliderHeight, width, styleOptions, data, start, end) {
-    const horizontalScrollDistance = 0;
+  addZoomSlider(scrollBarThickness, maxTextWidth, zoomSliderHeight, viewModeSliderHeight, width) {
     const horizontalXOffset = maxTextWidth;
 
     const root = d3.select('#scrollgroup');
@@ -192,6 +200,11 @@ export default class SVGGantt {
       .attr('ry', scrollBarThickness)
       .attr('fill', '#F0F1F2');
 
+    const thumbWidth = 16;
+    const outerWidth = parseFloat(outerZoomSlider.attr('width'));
+    const one = (outerWidth - 2 * thumbWidth) / this.totalDays;
+    let scrollbarWidth = this.zoomSlider.width;
+
     const horizontalScrollBar = parent.append('rect')
       .attr('class', 'HorizontalScrollBar')
       .attr('style', 'cursor:pointer')
@@ -200,14 +213,9 @@ export default class SVGGantt {
       .attr('ry', scrollBarThickness / 2)
       .attr('opacity', 1)
       .attr('fill', 'rgba(0, 0, 0, 0.3)')
-      // .attr('transform', `translate(${rootBBox.x},${rootBBox.y + rootBBox.height})`);
-      .attr('x', horizontalXOffset)
+      .attr('x', this.zoomSlider.x)
       .attr('y', viewModeSliderHeight + zoomSliderHeight / 2 - scrollBarThickness);
-      // .attr('transform', `translate(${horizontalXOffset},${viewModeSliderHeight + zoomSliderHeight / 2 - scrollBarThickness})`);
 
-    const thumbWidth = 16;
-
-    let scrollbarWidth = (width - horizontalXOffset) / (1 / this.scaleFactor);
     horizontalScrollBar.attr('width', scrollbarWidth);
 
     const leftThumb = parent.append('rect')
@@ -217,7 +225,7 @@ export default class SVGGantt {
       .attr('rx', thumbWidth / 4)
       .attr('ry', thumbWidth / 4)
       .attr('fill', '#F8F8F8')
-      .attr('x', horizontalXOffset)
+      .attr('x', this.zoomSlider.x)
       .attr('y', viewModeSliderHeight + zoomSliderHeight / 2 - scrollBarThickness - thumbWidth / 4);
 
     const rightThumb = parent.append('rect')
@@ -227,15 +235,8 @@ export default class SVGGantt {
       .attr('rx', thumbWidth / 4)
       .attr('ry', thumbWidth / 4)
       .attr('fill', '#F8F8F8')
-      .attr('x', horizontalXOffset + scrollbarWidth - thumbWidth)
+      .attr('x', this.zoomSlider.x + scrollbarWidth - thumbWidth)
       .attr('y', viewModeSliderHeight + zoomSliderHeight / 2 - scrollBarThickness - thumbWidth / 4);
-
-    let isHorizontalDragging = false;
-
-    const outerWidth = parseFloat(outerZoomSlider.attr('width'));
-    const outerX = parseFloat(outerZoomSlider.attr('x'));
-
-    const visibleDataWidth = width - maxTextWidth;
 
     const horizontalDragBehaviour = d3.drag()
       .on('drag', (event) => {
@@ -249,97 +250,70 @@ export default class SVGGantt {
           horizontalScrollBar.attr('x', currentSliderX + event.dx);
           leftThumb.attr('x', currentLeftThumbX + event.dx);
           rightThumb.attr('x', currentRightThumbX + event.dx);
-
-          const oneDayWidth = outerWidth / this.totalDays;
-          const daysToModify = Math.floor((currentSliderX + event.dx - outerX) / oneDayWidth);
-          const newMinDate = new Date(this.initialMinDate);
-          const newMaxDate = new Date(this.initialMaxDate);
-          newMinDate.setDate(newMinDate.getDate() + daysToModify);
-          newMaxDate.setDate(newMaxDate.getDate() + daysToModify);
-          if (newMinDate.getTime() !== this.chartMaxDate.getTime()) {
+          this.zoomSlider.x = currentSliderX + event.dx;
+          this.leftIndex = Math.round(this.daysScale(currentLeftThumbX + event.dx));
+          this.rightIndex = Math.round(this.daysScale(currentRightThumbX + event.dx - thumbWidth - one));
+          const newMinDate = new Date(this.dates[this.leftIndex]);
+          const newMaxDate = new Date(this.dates[this.rightIndex]);
+          if (newMinDate.getTime() !== this.chartMinDate.getTime() && newMaxDate.getTime() !== this.chartMaxDate.getTime()) {
             this.chartMinDate = newMinDate;
             this.chartMaxDate = newMaxDate;
-            this.update();
+            this.visibleDates = this.rightIndex - this.leftIndex + 1;
+            this.unitWidth = this.visibleDataWidth / this.visibleDates;
+            this.buildChart();
           }
         }
-
-        // const scrollBarPosition = horizontalScrollDistance / maxHorizontalScroll * (rootBBox.width - scrollbarWidth);
-        // if (!Number.isNaN(scrollBarPosition)) {
-        //   const horizontalFactor = horizontalXOffset * scrollBarPosition / (width - scrollbarWidth);
-        //   horizontalScrollBar.attr('x', horizontalXOffset + scrollBarPosition - horizontalFactor);
-        //   leftThumb.attr('x', horizontalXOffset + scrollBarPosition - horizontalFactor);
-        //   rightThumb.attr('x', horizontalXOffset + scrollBarPosition + scrollbarWidth - thumbWidth - horizontalFactor);
-        // }
-      })
-      .on('start', (event) => {
-        isHorizontalDragging = true;
-      })
-      .on('end', (event) => {
-        isHorizontalDragging = false;
       });
 
     const leftThumbDragBehaviour = d3.drag()
       .on('drag', (event) => {
         const currentX = parseFloat(leftThumb.attr('x'));
         const leftMargin = parseFloat(outerZoomSlider.attr('x'));
-        const rightMargin = parseFloat(rightThumb.attr('x')) - thumbWidth;
+        const rightMargin = parseFloat(rightThumb.attr('x')) - thumbWidth - one;
         if (currentX + event.dx > leftMargin && currentX + event.dx < rightMargin) {
           leftThumb.attr('x', currentX + event.dx);
+          this.leftIndex = Math.round(this.daysScale(currentX + event.dx));
           scrollbarWidth -= event.dx;
-          let curretnScrollX = parseFloat(horizontalScrollBar.attr('x'));
-          curretnScrollX += event.dx;
+          let currentScrollX = parseFloat(horizontalScrollBar.attr('x'));
+          currentScrollX += event.dx;
           horizontalScrollBar.attr('width', scrollbarWidth);
-          horizontalScrollBar.attr('x', curretnScrollX);
+          horizontalScrollBar.attr('x', currentScrollX);
+          this.zoomSlider.x = currentScrollX;
+          this.zoomSlider.width = scrollbarWidth;
 
-          const oneDayWidth = outerWidth / this.totalDays;
-          const daysToModify = Math.floor((outerWidth - scrollbarWidth) / oneDayWidth);
-          const newMinDate = new Date(this.initialMinDate);
-          newMinDate.setDate(newMinDate.getDate() + daysToModify);
+          const newMinDate = new Date(this.dates[this.leftIndex]);
           if (newMinDate.getTime() !== this.chartMinDate.getTime()) {
-            const days = this.totalDays - daysToModify;
-
             this.chartMinDate = newMinDate;
-            this.unitWidth = visibleDataWidth / days;
-
-            this.update();
+            this.visibleDates = this.rightIndex - this.leftIndex + 1;
+            this.unitWidth = this.visibleDataWidth / this.visibleDates;
+            this.buildChart();
           }
         }
-      })
-      .on('start', (event) => {
-      })
-      .on('end', (event) => {
       });
 
     const rightThumbDragBehaviour = d3.drag()
       .on('drag', (event) => {
         const currentX = parseFloat(rightThumb.attr('x'));
         const rightMargin = parseFloat(outerZoomSlider.attr('x')) + outerWidth - thumbWidth;
-        const leftMargin = parseFloat(leftThumb.attr('x')) + thumbWidth;
+        const leftMargin = parseFloat(leftThumb.attr('x')) + thumbWidth + one;
         if (currentX + event.dx > leftMargin && currentX + event.dx < rightMargin) {
           rightThumb.attr('x', currentX + event.dx);
+          this.rightIndex = Math.round(this.daysScale(currentX + event.dx - thumbWidth - one));
           scrollbarWidth += event.dx;
           horizontalScrollBar.attr('width', scrollbarWidth);
+          this.zoomSlider.width = scrollbarWidth;
 
           this.scaleFactor = scrollbarWidth / outerWidth;
 
-          const oneDayWidth = outerWidth / this.totalDays;
-          const daysToModify = Math.floor((outerWidth - scrollbarWidth) / oneDayWidth);
-          const newMaxDate = new Date(this.initialMaxDate);
-          newMaxDate.setDate(newMaxDate.getDate() - daysToModify);
+          const newMaxDate = new Date(this.dates[this.rightIndex]);
           if (newMaxDate.getTime() !== this.chartMaxDate.getTime()) {
-            const days = this.totalDays - daysToModify;
-
             this.chartMaxDate = newMaxDate;
-            this.unitWidth = visibleDataWidth / days;
+            this.visibleDates = this.rightIndex - this.leftIndex + 1;
+            this.unitWidth = this.visibleDataWidth / this.visibleDates;
 
-            this.update();
+            this.buildChart();
           }
         }
-      })
-      .on('start', (event) => {
-      })
-      .on('end', (event) => {
-
       });
 
     horizontalScrollBar.call(horizontalDragBehaviour);
@@ -476,90 +450,64 @@ export default class SVGGantt {
     this.tree = render(<Gantt data={data} {...props} />);
     this.dom.appendChild(this.tree);
 
-    this.addScrollBar(options.scrollBarThickness, options.headerHeight, options.rowHeight, options.barHeight, options.maxTextWidth,
-      options.zoomSliderHeight, options.viewModeSliderHeight, options.maxWidth, options.styleOptions, data, start, end);
-    this.addZoomSlider(options.scrollBarThickness, options.headerHeight, options.rowHeight, options.barHeight, options.maxTextWidth,
-      options.zoomSliderHeight, options.viewModeSliderHeight, options.maxWidth, options.styleOptions, data, start, end);
-    this.addThumbDragBehaviour(options.sliderWidth);
+    this.addScrollBar(options.scrollBarThickness, options.headerHeight, options.rowHeight,
+      options.barHeight, options.zoomSliderHeight, options.viewModeSliderHeight);
+    this.addZoomSlider(options.scrollBarThickness, options.maxTextWidth, options.zoomSliderHeight, options.viewModeSliderHeight, options.maxWidth);
+    // this.addThumbDragBehaviour(options.sliderWidth);
     this.addRectangularSelection();
 
+    this.buildChart();
+  }
+
+  buildChart() {
     const dayHeader = d3.select('#DayHeader');
-    this.dayTexts = dayHeader.selectAll('.day-text');
-    this.dayLines = dayHeader.selectAll('.day-lines');
-    this.weekendDays = dayHeader.selectAll('.weekend-days');
-
-    const scrollgroup = d3.select('#scrollgroup');
-    this.chartLines = scrollgroup.selectAll('.chart-line');
-    this.chartWeekendDays = scrollgroup.selectAll('.chart-weekend-day');
-    this.backBars = scrollgroup.selectAll('.back-bar');
-    this.frontBars = scrollgroup.selectAll('.front-bar');
-    this.barStartDate = scrollgroup.selectAll('.bar-start-date');
-    this.barEndDate = scrollgroup.selectAll('.bar-end-date');
-    this.barHover = scrollgroup.selectAll('.bar-hover');
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  update() {
-    const dates = getDatesStrict(this.initialMinDate, this.initialMaxDate);
-    const leftOffset = (this.chartMinDate - this.initialMinDate) / DAY * this.unitWidth;
-    const len = dates.length - 1;
-    let x = this.options.maxTextWidth - leftOffset;
-    let j = 0;
-    for (let i = 0; i <= len; i++) {
-      const cur = new Date(dates[i]);
-      const day = cur.getDay();
-      d3.select(this.dayTexts.nodes()[i]).attr('x', x + this.unitWidth / 2);
-      if (day === 0 || day === 6) {
-        d3.select(this.weekendDays.nodes()[j]).attr('x', x);
-        d3.select(this.weekendDays.nodes()[j]).attr('width', this.unitWidth);
-        d3.select(this.chartWeekendDays.nodes()[j]).attr('x', x);
-        d3.select(this.chartWeekendDays.nodes()[j]).attr('width', this.unitWidth);
-        j += 1;
-      }
-      x += this.unitWidth;
-      d3.select(this.dayLines.nodes()[i]).attr('x1', x);
-      d3.select(this.dayLines.nodes()[i]).attr('x2', x);
-      d3.select(this.chartLines.nodes()[i]).attr('x1', x);
-      d3.select(this.chartLines.nodes()[i]).attr('x2', x);
-    }
-
-    for (let i = 0; i < this.data.length; i++) {
-      const currentBar = this.data[i];
-      const newX = this.options.maxTextWidth + (currentBar.start - this.chartMinDate) / DAY * this.unitWidth;
-      let barWidth = (currentBar.end - currentBar.start) / DAY * this.unitWidth;
-
-      if (barWidth === 0) {
-        barWidth = this.unitWidth / 2;
-      }
-
-      d3.select(this.backBars.nodes()[i]).attr('x', newX);
-      d3.select(this.backBars.nodes()[i]).attr('width', barWidth);
-
-      d3.select(this.frontBars.nodes()[i]).attr('x', newX);
-      d3.select(this.frontBars.nodes()[i]).attr('width', barWidth * currentBar.percent);
-
-      d3.select(this.barHover.nodes()[i]).attr('x', newX - 3);
-      d3.select(this.barHover.nodes()[i]).attr('width', barWidth + 6);
-
-      d3.select(this.barStartDate.nodes()[i]).attr('x', newX - 4);
-      d3.select(this.barEndDate.nodes()[i]).attr('x', newX + barWidth + 4);
-    }
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  updateChart() {
+    dayHeader.selectAll('*').remove();
     const content = d3.select('#GanttContent');
     content.selectAll('*').remove();
 
     const dates = getDatesStrict(this.chartMinDate, this.chartMaxDate);
     const len = dates.length - 1;
     let x = this.options.maxTextWidth;
+    const y0 = (this.options.rowHeight - this.options.barHeight) / 2;
+
+    const headerY0 = this.options.viewModeSliderHeight + this.options.zoomSliderHeight + this.options.headerHeight / 2;
 
     const offsetY = this.options.viewModeSliderHeight + this.options.zoomSliderHeight + this.options.headerHeight;
 
+    dayHeader.append('rect')
+      .attr('x', x)
+      .attr('y', 0)
+      .attr('width', x + this.unitWidth * len)
+      .attr('height', this.options.headerHeight + this.options.viewModeSliderHeight + this.options.zoomSliderHeight)
+      .style('fill', 'white');
+
     for (let i = 0; i <= len; i++) {
-      const cur = new Date(dates[i]);
-      const day = cur.getDay();
+      const currentDate = new Date(dates[i]);
+      const day = currentDate.getDay();
+
+      dayHeader.append('rect')
+        .attr('x', x)
+        .attr('y', headerY0)
+        .attr('width', this.unitWidth)
+        .attr('height', this.options.headerHeight / 2)
+        .style('fill', () => (day === 0 || day === 6 ? 'rgb(247,249,255)' : 'white'))
+        .classed('day-background', true);
+
+      if (i !== 0) {
+        dayHeader.append('line')
+          .attr('x1', x)
+          .attr('x2', x)
+          .attr('y1', headerY0)
+          .attr('y2', headerY0 + this.options.headerHeight / 2)
+          .style('stroke', '#DCDFE8')
+          .style('stroke-width', '1px');
+      }
+
+      dayHeader.append('text')
+        .attr('x', x + this.unitWidth / 2)
+        .attr('y', this.options.viewModeSliderHeight + this.options.zoomSliderHeight + this.options.headerHeight * 0.75)
+        .classed('header-text', true)
+        .text(currentDate.getDate());
 
       content.append('line')
         .attr('x1', x)
@@ -570,9 +518,98 @@ export default class SVGGantt {
         .style('stroke-width', '1px');
 
       x += this.unitWidth;
-
-      // d3.select(this.chartLines.nodes()[i]).attr('x1', x);
-      // d3.select(this.chartLines.nodes()[i]).attr('x2', x);
     }
+
+    for (let i = 0; i < this.data.length; i++) {
+      const currentBar = this.data[i];
+      const newX = this.options.maxTextWidth + (getNumberOfDays(this.chartMinDate, currentBar.start) - 1) * this.unitWidth;
+      let barWidth = (getNumberOfDays(currentBar.start, currentBar.end)) * this.unitWidth;
+
+      if (barWidth === 0) {
+        barWidth = this.unitWidth / 2;
+      }
+
+      const y = offsetY + y0 + i * this.options.rowHeight;
+
+      // eslint-disable-next-line no-loop-func
+      const onClickHandler = () => this.options.onClick(currentBar);
+      const onMouseOverHandler = () => {
+        const barElement = d3.select(`#bar${i}`);
+        barElement
+          .style('stroke-width', '1px');
+        this.options.onMouseOver(currentBar);
+      };
+      const onMouseOutHandler = () => {
+        const barElement = d3.select(`#bar${i}`);
+        barElement
+          .style('stroke-width', '0px');
+        this.options.onMouseOut(currentBar);
+      };
+
+      this.buildGanttBar(content, i, newX, y, barWidth, this.options.barHeight, currentBar, onClickHandler, onMouseOverHandler, onMouseOutHandler);
+    }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  buildGanttBar(parent, index, x, y, width, height, currentBar, onClickHandler, onMouseOverHandler, onMouseOutHandler) {
+    const barContainer = parent.append('g')
+      .attr('key', index)
+      .attr('class', 'gantt-bar');
+
+    barContainer.append('text')
+      .attr('x', x - 4)
+      .attr('y', y + height / 2)
+      .classed('bar-start-date', true)
+      .text(formatDay(currentBar.start));
+
+    barContainer.append('text')
+      .attr('x', x + width + 4)
+      .attr('y', y + height / 2)
+      .classed('bar-end-date', true)
+      .text(formatDay(currentBar.end));
+
+    let backFill = '#9CFCC8';
+    let frontFill = '#6ADB7F';
+    if (currentBar.type === 'group') {
+      backFill = '#9CFCC8';
+      frontFill = '#6ADB7F';
+    } else {
+      backFill = '#9EB6FF';
+      frontFill = '#6489FA';
+    }
+
+    barContainer.append('rect')
+      .attr('x', x)
+      .attr('y', y)
+      .attr('width', width)
+      .attr('height', height)
+      .style('fill', backFill)
+      .style('opacity', currentBar.isMarked ? '0.5' : '1')
+      .style('stroke', currentBar.isMarked ? '#8F7769' : 'none')
+      .classed('back-bar', true);
+
+    barContainer.append('rect')
+      .attr('x', x)
+      .attr('y', y)
+      .attr('width', width * currentBar.percent)
+      .attr('height', height)
+      .style('fill', frontFill)
+      .style('opacity', currentBar.isMarked ? '0.5' : '1')
+      .classed('front-bar', true);
+
+    barContainer.append('rect')
+      .attr('x', x - 3)
+      .attr('y', y - 3)
+      .attr('width', width + 6)
+      .attr('height', height + 6)
+      .attr('id', `bar${index}`)
+      .style('fill', '#fff')
+      .style('fill-opacity', '0')
+      .style('stroke', '#333')
+      .style('stroke-width', '0px')
+      .on('click', onClickHandler)
+      .on('mouseover', onMouseOverHandler)
+      .on('mouseout', onMouseOutHandler)
+      .classed('hover-bar', true);
   }
 }

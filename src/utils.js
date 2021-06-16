@@ -20,7 +20,11 @@ export function getDates(begin, end) {
 export function getDatesStrict(begin, end) {
   const dates = [];
   let s = new Date(begin);
-  while (s.getTime() <= end) {
+  s.setHours(0, 0, 0, 0);
+  const e = new Date(end);
+  e.setHours(0, 0, 0, 0);
+
+  while (s.getTime() <= e) {
     dates.push(s.getTime());
     s = addDays(s, 1);
   }
@@ -290,4 +294,12 @@ export function getTranslation(transform) {
   g.setAttributeNS(null, 'transform', transform);
   const { matrix } = g.transform.baseVal.consolidate();
   return [matrix.e, matrix.f];
+}
+
+export function getNumberOfDays(start, end) {
+  const s = new Date(start);
+  s.setHours(0, 0, 0, 0);
+  const e = new Date(end);
+  e.setHours(0, 0, 0, 0);
+  return Math.floor((e - s) / DAY + 1);
 }

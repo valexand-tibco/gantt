@@ -1,10 +1,10 @@
 import h from '../h';
-import { getDates, getDatesStrict } from '../utils';
+import { getDatesStrict } from '../utils';
 import YearMonth from './YearMonth';
 
 export default function DayHeader({
-  styles, unit, minTime, maxTime, height, offsetY, maxTextWidth, width, viewModeSliderHeight, zoomSliderHeight,
-  chartMinDate, chartMaxDate, unitWidth, initialMinDate, initialMaxDate
+  styles, unit, height, offsetY, maxTextWidth, width, viewModeSliderHeight, zoomSliderHeight,
+  unitWidth, initialMinDate, initialMaxDate
 }) {
   const dates = getDatesStrict(initialMinDate, initialMaxDate);
   const ticks = [];
@@ -12,7 +12,6 @@ export default function DayHeader({
   const y0 = viewModeSliderHeight + zoomSliderHeight + offsetY / 2;
   const RH = offsetY / 2;
   let x = x0;
-  const days = (chartMaxDate - chartMinDate) / (1000 * 3600 * 24);
   const len = dates.length - 1;
   const minDate = dates[0];
   const maxDate = dates[len];
